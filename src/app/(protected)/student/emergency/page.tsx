@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
+import Link from "next/link"
 import { MapModule } from "@/components/map-wrapper"
 import { LoadingScreen } from "@/components/loading-screen"
 import { useCurrentUser } from "@/hooks/use-current-user"
@@ -179,7 +180,6 @@ export default function StudentEmergency() {
         student_id: user.id,
         student_name: reportForOther ? (otherName || "Unknown Student") : user.full_name || "Unknown Student",
         hall_id: primaryHall,
-        nearest_halls: nearestHalls,
         room_number: user.room_number || "",
         type: emergencyLabels[emergencyTypeRef.current] ?? "Emergency",
         description: `${reportForOther ? `[3rd Party Report by ${user.full_name || "Unknown Reporter"}] ` : ""}${descriptionRef.current || "No description provided."}`,
@@ -378,6 +378,11 @@ export default function StudentEmergency() {
                  hospital={BABCOCK_HOSPITAL}
                  activeIncidents={alertedCubicles}
                  responderLocation={responderPos}
+                 activeRoute={
+                   studentLocation && studentHall
+                     ? { from: studentLocation, to: [studentHall.lat, studentHall.lng] }
+                     : undefined
+                 }
                  className="h-full w-full rounded-none"
               />
 
@@ -395,17 +400,19 @@ export default function StudentEmergency() {
            </Card>
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="border-border/50 bg-destructive/5 shadow-lg border-dashed">
-                 <CardContent className="p-5 flex gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center text-destructive shrink-0">
-                       <Navigation className="w-5 h-5" />
-                    </div>
-                    <div className="space-y-1">
-                       <h4 className="font-bold text-sm">Priority Dispatch</h4>
-                       <p className="text-[10px] text-destructive/70 leading-relaxed uppercase tracking-widest font-bold">Responders coming to you</p>
-                    </div>
-                 </CardContent>
-              </Card>
+              <Link href="/student/map">
+                <Card className="border-border/50 bg-destructive/5 shadow-lg border-dashed cursor-pointer hover:bg-destructive/10 transition-colors">
+                   <CardContent className="p-5 flex gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center text-destructive shrink-0">
+                         <Navigation className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                         <h4 className="font-bold text-sm">Navigate to Cubicle</h4>
+                         <p className="text-[10px] text-destructive/70 leading-relaxed uppercase tracking-widest font-bold">View route on map →</p>
+                      </div>
+                   </CardContent>
+                </Card>
+              </Link>
               <Card className="border-border/50 bg-accent/5 shadow-lg border-dashed">
                  <CardContent className="p-5 flex gap-4">
                     <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent shrink-0">

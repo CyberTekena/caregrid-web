@@ -278,7 +278,15 @@ export default function StudentMap() {
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <Button className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold h-10 text-xs">
+                <Button
+                  className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold h-10 text-xs"
+                  onClick={() => {
+                    const dest = selected ?? nearest
+                    if (!dest) return
+                    const url = `https://www.google.com/maps/dir/?api=1&destination=${dest.lat},${dest.lng}&travelmode=walking`
+                    window.open(url, "_blank")
+                  }}
+                >
                   <Navigation className="w-3 h-3 mr-1" /> Navigate
                 </Button>
                 {selected && (

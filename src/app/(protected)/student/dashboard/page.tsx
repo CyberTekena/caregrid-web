@@ -177,12 +177,16 @@ export default function StudentDashboard() {
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                     <Button variant="outline" className="w-full sm:w-auto h-11 rounded-xl bg-background/50 border-border/50 font-bold gap-2 text-[10px] md:text-xs">
-                        <Navigation className="w-4 h-4" /> View Route
-                     </Button>
-                     <Button className="w-full sm:w-auto h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold gap-2 shadow-lg shadow-primary/20 text-[10px] md:text-xs px-6">
-                        Contact Hall Responder
-                     </Button>
+                     <Link href="/student/map">
+                       <Button variant="outline" className="w-full sm:w-auto h-11 rounded-xl bg-background/50 border-border/50 font-bold gap-2 text-[10px] md:text-xs">
+                          <Navigation className="w-4 h-4" /> View Route
+                       </Button>
+                     </Link>
+                     <Link href="/student/emergency">
+                       <Button className="w-full sm:w-auto h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold gap-2 shadow-lg shadow-primary/20 text-[10px] md:text-xs px-6">
+                          Contact Hall Responder
+                       </Button>
+                     </Link>
                   </div>
                </CardContent>
             </Card>
