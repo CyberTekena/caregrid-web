@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { motion } from "framer-motion"
-import { MapPin, Navigation, Info, Building2, Search, Filter, X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { MapPin, Navigation, Info, Building2, Search, Filter, X, ShieldAlert } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -59,13 +59,19 @@ export default function StudentMap() {
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<HallCubicle | null>(null)
   const [browserLocation, setBrowserLocation] = useState<[number, number] | null>(null)
+  const [isOffCampus, setIsOffCampus] = useState(false)
 
   // Request browser geolocation on mount
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setBrowserLocation([position.coords.latitude, position.coords.longitude])
+          const { latitude: lat, longitude: lng } = position.coords
+          setBrowserLocation([lat, lng])
+          
+          // Geofencing Check: Babcock University approx bounds
+          const offCampus = lat < 6.890 || lat > 6.898 || lng < 3.718 || lng > 3.732
+          setIsOffCampus(offCampus)
         },
         (error) => {
           console.warn("Geolocation error:", error.message)
@@ -127,6 +133,26 @@ export default function StudentMap() {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-theme(spacing.16))] font-sans relative">
+
+      <AnimatePresence>
+        {isOffCampus && (
+          <motion.div 
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            exit={{ y: -100 }}
+            className="absolute top-0 left-0 right-0 z-[100] bg-destructive text-white px-4 py-3 flex items-center justify-center gap-3 shadow-2xl font-bold text-sm text-center"
+          >
+            <ShieldAlert className="w-5 h-5 animate-pulse shrink-0" />
+            <span>Outside Service Area: GPS tracking restricted to Babcock campus boundaries.</span>
+            <button 
+              onClick={() => setIsOffCampus(false)}
+              className="ml-4 underline opacity-80 hover:opacity-100"
+            >
+              Dismiss
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Search & Filter Overlay */}
       <div className="absolute top-6 left-6 right-6 z-20 flex gap-4 pointer-events-none">

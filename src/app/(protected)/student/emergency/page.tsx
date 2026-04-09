@@ -40,13 +40,20 @@ export default function StudentEmergency() {
   const descriptionRef = useRef("")
   const [responderPos, setResponderPos] = useState<[number, number] | undefined>(undefined)
   const [browserLocation, setBrowserLocation] = useState<[number, number] | null>(null)
+  const [isOffCampus, setIsOffCampus] = useState(false)
+  const [isDemoMode, setIsDemoMode] = useState(false)
 
   // Request browser geolocation on mount
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setBrowserLocation([position.coords.latitude, position.coords.longitude])
+          const { latitude: lat, longitude: lng } = position.coords
+          setBrowserLocation([lat, lng])
+          
+          // Geofencing Check: Babcock University approx bounds
+          const offCampus = lat < 6.890 || lat > 6.898 || lng < 3.718 || lng > 3.732
+          setIsOffCampus(offCampus)
         },
         (error) => {
           console.warn("Geolocation error:", error.message)
@@ -56,7 +63,9 @@ export default function StudentEmergency() {
   }, [])
 
   const studentHall = halls.find(h => h.id === user?.hall_id)
-  const studentLocation: [number, number] | null = browserLocation || (studentHall ? [studentHall.lat, studentHall.lng] : null)
+  const studentLocation: [number, number] | null = (browserLocation && !isDemoMode) 
+    ? browserLocation 
+    : (studentHall ? [studentHall.lat, studentHall.lng] : null)
 
   // Simulate responder movement for demo impact
   useEffect(() => {
@@ -84,15 +93,10 @@ export default function StudentEmergency() {
     return () => clearInterval(interval)
   }, [isEmergencyActive, studentLocation?.[0], studentLocation?.[1]])
 
-  // Show loading state while data is being fetched
-  if (hallsLoading || !user) {
-    return <LoadingScreen message="Loading Emergency Services..." />
-  }
-
   const hospitalPos: [number, number] = [BABCOCK_HOSPITAL.lat, BABCOCK_HOSPITAL.lng]
 
   const alertedCubicles = useMemo(() => {
-    if (!isEmergencyActive || !studentLocation) return []
+    if (!isEmergencyActive || !studentLocation || !halls.length) return []
     const sorted = hallsSortedByDistance(studentLocation)
     return sorted.slice(0, 3).map(h => ({
       id: h.id,
@@ -100,7 +104,42 @@ export default function StudentEmergency() {
       lng: h.lng,
       type: "SOS Alerted"
     }))
-  }, [isEmergencyActive, studentLocation])
+  }, [isEmergencyActive, studentLocation, halls.length])
+
+  // Show loading state while data is being fetched
+  if (hallsLoading || !user) {
+    return <LoadingScreen message="Loading Emergency Services..." />
+  }
+
+  if (isOffCampus) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto space-y-6">
+        <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center border-2 border-destructive/20">
+          <ShieldAlert className="w-10 h-10 text-destructive" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-black uppercase tracking-tight text-foreground">Out of Service Area</h1>
+          <p className="text-muted-foreground font-medium">
+            We apologize, but CareGrid SOS services are restricted to the **Babcock University campus boundaries** for rapid response.
+          </p>
+        </div>
+        <div className="p-4 bg-muted/50 rounded-2xl border border-border/50 text-xs font-medium text-muted-foreground leading-relaxed">
+          If you are experiencing a life-threatening emergency off-campus, please contact the national emergency services or visit the nearest medical facility.
+        </div>
+        
+        <Button 
+          variant="outline" 
+          onClick={() => {
+            setIsDemoMode(true)
+            setIsOffCampus(false)
+          }}
+          className="w-full h-12 rounded-xl border-primary/20 text-primary hover:bg-primary/5 font-bold"
+        >
+          Demo Bypass: Use Hall Location
+        </Button>
+      </div>
+    )
+  }
 
   const emergencyLabels: Record<string, string> = {
     asthma: "Asthma Attack",
@@ -115,19 +154,17 @@ export default function StudentEmergency() {
       return
     }
 
-    // Geofencing Check: Babcock University approx bounds
-    // Lat: 6.891 to 6.896, Lng: 3.720 to 3.729
-    if (browserLocation) {
-      const [lat, lng] = browserLocation
-      const isOffCampus = lat < 6.890 || lat > 6.898 || lng < 3.718 || lng > 3.732
-      
-      if (isOffCampus) {
-        toast.error("Out of Service Area", { 
-          description: "We apologize, but SOS services are currently restricted to the Babcock University campus boundaries.",
-          duration: 6000
-        })
-        return
-      }
+    if (!halls.length) {
+      toast.error("System Error", { description: "Hall data is not yet synchronized. Please wait a moment and try again." })
+      return
+    }
+
+    if (isOffCampus) {
+      toast.error("Out of Service Area", { 
+        description: "We apologize, but SOS services are restricted to the Babcock University campus boundaries.",
+        duration: 6000
+      })
+      return
     }
 
     setLoading(true)
