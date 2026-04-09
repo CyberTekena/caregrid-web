@@ -328,7 +328,7 @@ export default function LoginPage() {
                         <Input 
                           id="email" 
                           type="email" 
-                          placeholder="m.doe@student.babcock.edu.ng" 
+                          placeholder="username@babcock.edu.ng" 
                           className="h-12 rounded-xl bg-background/50 focus-visible:ring-primary/20 focus-visible:border-primary/50"
                           value={formData.email}
                           onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}

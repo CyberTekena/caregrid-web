@@ -7,9 +7,9 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Load environment variables
-const envPath = join(__dirname, '../../.env.local')
+const envPath = join(__dirname, '../.env.local')
 const envContent = readFileSync(envPath, 'utf-8')
-const envVars: Record<string, string> = {}
+const envVars = {}
 
 envContent.split('\n').forEach(line => {
   const [key, ...valueParts] = line.split('=')
@@ -33,6 +33,30 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   }
 })
 
+// Current updated halls list (20 halls)
+const HALLS = [
+  { id: "welch", name: "Welch Hall" },
+  { id: "neal-wilson", name: "Neal Wilson Hall" },
+  { id: "nelson-mandela", name: "Nelson Mandela Hall" },
+  { id: "gideon-troopers", name: "Gideon Troopers Hall" },
+  { id: "bethel-splendor", name: "Bethel Splendor Hall" },
+  { id: "samuel-akande", name: "Samuel Akande Hall" },
+  { id: "adeleke", name: "Adeleke Hall" },
+  { id: "emerald", name: "Emerald Hall" },
+  { id: "topaz", name: "Topaz Hall" },
+  { id: "havilah-gold", name: "Havilah Gold Hall" },
+  { id: "crystal", name: "Crystal Hall" },
+  { id: "ameyo-adadevoh", name: "Ameyo Adadevoh Hall" },
+  { id: "felicia-dada", name: "Felicia Adebisi Dada Hall" },
+  { id: "queen-esther", name: "Queen Esther Hall" },
+  { id: "white", name: "White Hall" },
+  { id: "nyberg", name: "Nyberg Hall" },
+  { id: "ogden", name: "Ogden Hall" },
+  { id: "platinum", name: "Platinum Hall" },
+  { id: "diamond", name: "Diamond Hall" },
+  { id: "sapphire", name: "Sapphire Hall" },
+]
+
 // Sample data for different user roles
 const sampleUsers = {
   students: [
@@ -47,46 +71,15 @@ const sampleUsers = {
       genotype: 'AA',
       allergies: ['Peanuts'],
       conditions: ['Asthma']
-    },
-    {
-      email: 'jane.smith@student.babcock.edu.ng',
-      password: 'password123',
-      matricNumber: '22/1235',
-      fullName: 'Jane Smith',
-      hallId: 'neal-wilson',
-      roomNumber: 'B202',
-      bloodGroup: 'A+',
-      genotype: 'AS',
-      allergies: [],
-      conditions: []
-    },
-    {
-      email: 'mike.johnson@student.babcock.edu.ng',
-      password: 'password123',
-      matricNumber: '22/1236',
-      fullName: 'Mike Johnson',
-      hallId: 'nelson-mandela',
-      roomNumber: 'C303',
-      bloodGroup: 'B+',
-      genotype: 'AA',
-      allergies: ['Shellfish'],
-      conditions: ['Diabetes']
     }
   ],
-  cubicle: [
-    {
-      email: 'sarah.williams@cubicle.babcock.edu.ng',
-      password: 'password123',
-      fullName: 'Sarah Williams',
-      hallId: 'welch'
-    },
-    {
-      email: 'david.brown@cubicle.babcock.edu.ng',
-      password: 'password123',
-      fullName: 'David Brown',
-      hallId: 'neal-wilson'
-    }
-  ],
+  // Generate a staff account for EVERY hall
+  cubicle: HALLS.map(hall => ({
+    email: `staff.${hall.id}@babcock.edu.ng`,
+    password: 'password123',
+    fullName: `${hall.name} Staff`,
+    hallId: hall.id
+  })),
   admin: [
     {
       email: 'admin@babcock.edu.ng',
@@ -96,8 +89,17 @@ const sampleUsers = {
   ]
 }
 
-async function createUser(email: string, password: string, userData: any) {
+async function createUser(email, password, userData) {
   try {
+    // Check if user already exists
+    const { data: existingUser } = await supabase.auth.admin.listUsers()
+    const found = existingUser.users.find(u => u.email === email)
+    
+    if (found) {
+      console.log(`- User already exists: ${email}`)
+      return found
+    }
+
     // Create auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
@@ -119,21 +121,22 @@ async function createUser(email: string, password: string, userData: any) {
   }
 }
 
-async function createProfile(userId: string, profileData: any) {
+async function createProfile(userId, profileData) {
   try {
+    // Upsert profile
     const { error } = await supabase
       .from('profiles')
-      .insert({
+      .upsert({
         id: userId,
         ...profileData
       })
 
     if (error) {
-      console.error(`Failed to create profile for ${profileData.email}:`, error.message)
+      console.error(`Failed to create/update profile for ${profileData.email}:`, error.message)
       return false
     }
 
-    console.log(`✓ Created profile for: ${profileData.email}`)
+    console.log(`✓ Created/Updated profile for: ${profileData.email}`)
     return true
   } catch (error) {
     console.error(`Error creating profile for ${profileData.email}:`, error)
@@ -169,7 +172,7 @@ async function seedDatabase() {
   }
 
   // Create cubicle staff
-  console.log('\n🏥 Creating cubicle staff accounts...')
+  console.log('\n🏥 Creating cubicle staff accounts for all 20 halls...')
   for (const staff of sampleUsers.cubicle) {
     const user = await createUser(staff.email, staff.password, {
       role: 'cubicle'
@@ -202,19 +205,14 @@ async function seedDatabase() {
   }
 
   console.log('\n✅ Database seeding completed!')
-  console.log('\n📋 Demo Accounts:')
-  console.log('Students:')
-  sampleUsers.students.forEach(student => {
-    console.log(`  ${student.email} - ${student.password} (${student.fullName})`)
-  })
-  console.log('Cubicle Staff:')
-  sampleUsers.cubicle.forEach(staff => {
-    console.log(`  ${staff.email} - ${staff.password} (${staff.fullName})`)
-  })
+  console.log('\n📋 Account Credentials:')
   console.log('Admin:')
-  sampleUsers.admin.forEach(admin => {
-    console.log(`  ${admin.email} - ${admin.password} (${admin.fullName})`)
-  })
+  console.log(`  Email: admin@babcock.edu.ng | Password: admin123`)
+  console.log('Cubicle Staff Pattern:')
+  console.log(`  Email: staff.[hall-id]@babcock.edu.ng | Password: password123`)
+  console.log('  Example: staff.welch@babcock.edu.ng')
+  console.log('Student:')
+  console.log(`  Email: john.doe@student.babcock.edu.ng | Password: password123`)
 }
 
 // Run the seeding script
