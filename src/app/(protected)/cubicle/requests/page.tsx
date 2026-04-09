@@ -2,18 +2,21 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Phone, ShieldAlert, Zap, CheckCircle2, Navigation, Clock } from "lucide-react"
+import { Phone, ShieldAlert, Zap, CheckCircle2, Navigation, Clock, Loader2 } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useAppStore } from "@/hooks/use-app-store"
-import { appStore, type EmergencyRequest } from "@/store/app-store"
 import { toast } from "sonner"
+import { useCurrentUser } from "@/hooks/use-current-user"
+import { useHalls } from "@/hooks/use-halls"
+import { useIncidents } from "@/hooks/use-incidents"
+import { incidentService, type Incident } from "@/lib/services/incident-service"
 
 const PHONE_NUMBER = "tel:+2348000000000"
 
-function timeAgo(date: Date) {
+function timeAgo(dateStr: string) {
+  const date = new Date(dateStr)
   const secs = Math.floor((Date.now() - date.getTime()) / 1000)
   if (secs < 60) return `${secs}s ago`
   const mins = Math.floor(secs / 60)
@@ -21,20 +24,25 @@ function timeAgo(date: Date) {
   return `${Math.floor(mins / 60)}h ago`
 }
 
-function RequestRow({ req, showHistory }: { req: EmergencyRequest; showHistory: boolean }) {
+function RequestRow({ req, showHistory }: { req: Incident; showHistory: boolean }) {
   const [expanded, setExpanded] = useState(false)
+  const [updating, setUpdating] = useState(false)
 
-  const handleOnRoute = () => {
-    appStore.markOnRoute(req.id)
-    toast.success("Marked On-Route", { description: `Heading to ${req.hallName}, ${req.room}` })
+  const handleStatusUpdate = async (newStatus: Incident['status']) => {
+    setUpdating(true)
+    try {
+      await incidentService.updateStatus(req.id, newStatus)
+      toast.success(newStatus === 'on-route' ? "Marked On-Route" : "Resolved")
+    } catch (e) {
+      toast.error("Failed to update status")
+    } finally {
+      setUpdating(false)
+    }
   }
-  const handleResolve = () => {
-    appStore.resolveRequest(req.id)
-    toast.success("Resolved", { description: `${req.studentName}'s case closed.` })
-  }
+
   const isResolved = req.status === "resolved"
   const isOnRoute = req.status === "on-route"
-  const isCritical = req.essScore >= 7
+  const isCritical = req.ess_score >= 7
 
   if (isResolved && !showHistory) return null
 
@@ -51,7 +59,7 @@ function RequestRow({ req, showHistory }: { req: EmergencyRequest; showHistory: 
               </div>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h4 className="font-bold text-lg">{req.studentName}</h4>
+                  <h4 className="font-bold text-lg">{req.student_name}</h4>
                   <Badge variant="outline" className={`text-[10px] font-black uppercase
                     ${isResolved ? "bg-green-500/10 text-green-600 border-green-500/20" :
                       isOnRoute  ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
@@ -60,11 +68,11 @@ function RequestRow({ req, showHistory }: { req: EmergencyRequest; showHistory: 
                     {isResolved ? "Resolved" : isOnRoute ? "On-Route" : req.type}
                   </Badge>
                   <Badge variant="outline" className="bg-background/80 border-border font-black flex items-center gap-1 text-[10px]">
-                    <Zap className="w-3 h-3 text-amber-500" /> ESS: {req.essScore}
+                    <Zap className="w-3 h-3 text-amber-500" /> ESS: {req.ess_score}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
-                  {req.hallName} &bull; {req.room}
+                  {req.hall_id.toUpperCase()} HALL &bull; {req.room_number}
                 </p>
               </div>
             </div>
@@ -72,7 +80,7 @@ function RequestRow({ req, showHistory }: { req: EmergencyRequest; showHistory: 
             <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0">
               <div className="text-right">
                 <p className="text-xs font-bold text-foreground flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> {timeAgo(req.timestamp)}
+                  <Clock className="w-3 h-3" /> {timeAgo(req.created_at)}
                 </p>
                 <p className="text-[10px] text-muted-foreground font-bold tracking-widest mt-0.5 uppercase">
                   {isResolved ? "Closed" : isOnRoute ? "En Route" : "Triage Pending"}
@@ -104,23 +112,25 @@ function RequestRow({ req, showHistory }: { req: EmergencyRequest; showHistory: 
               className="border-t border-border/40 pt-4 space-y-3"
             >
               <div className="bg-muted/30 p-3 rounded-xl text-sm italic text-foreground/80">
-                "{req.description}"
+                "{req.description || "No description provided."}"
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Button
-                  onClick={handleOnRoute}
-                  disabled={isOnRoute}
+                  onClick={() => handleStatusUpdate('on-route')}
+                  disabled={isOnRoute || updating}
                   className="rounded-xl h-10 bg-destructive hover:bg-destructive/90 text-white font-bold text-xs disabled:opacity-50"
                 >
-                  <Navigation className="w-3.5 h-3.5 mr-1" />
+                  {updating ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Navigation className="w-3.5 h-3.5 mr-1" />}
                   {isOnRoute ? "On-Route" : "Mark On-Route"}
                 </Button>
                 <Button
-                  onClick={handleResolve}
+                  onClick={() => handleStatusUpdate('resolved')}
+                  disabled={updating}
                   variant="secondary"
                   className="rounded-xl h-10 bg-green-500/10 text-green-700 hover:bg-green-500/20 text-xs font-bold"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Resolve
+                  {updating ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
+                   Resolve
                 </Button>
               </div>
             </motion.div>
@@ -132,12 +142,15 @@ function RequestRow({ req, showHistory }: { req: EmergencyRequest; showHistory: 
 }
 
 export default function CubicleRequests() {
-  const { requests } = useAppStore()
+  const { user, loading: userLoading } = useCurrentUser()
+  const { halls, loading: hallsLoading } = useHalls()
+  const hallId = user?.hall_id || 'welch'
+  const { incidents, loading } = useIncidents(hallId)
+  const hallLabel = halls.find(h => h.id === hallId)?.name || hallId.replace(/-/g, ' ') || 'your hall'
   const [showHistory, setShowHistory] = useState(false)
 
-  const myRequests = requests.filter(r => r.hallId === "welch")
-  const active = myRequests.filter(r => r.status !== "resolved")
-  const resolved = myRequests.filter(r => r.status === "resolved")
+  const active = incidents.filter(r => r.status !== "resolved")
+  const resolved = incidents.filter(r => r.status === "resolved")
 
   const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } }
 
@@ -149,7 +162,7 @@ export default function CubicleRequests() {
         <div>
           <h1 className="text-3xl font-black tracking-tight text-foreground">Active Requests</h1>
           <p className="text-muted-foreground mt-1">
-            {active.length} active &bull; {resolved.length} resolved — Welch Hall
+            {active.length} active &bull; {resolved.length} resolved — {hallLabel}
           </p>
         </div>
         <div className="flex bg-muted/50 p-1 rounded-xl">
@@ -170,7 +183,11 @@ export default function CubicleRequests() {
         </div>
       </motion.div>
 
-      {myRequests.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center p-20">
+           <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : incidents.length === 0 ? (
         <Card className="border-border/50 bg-background/60 p-12 text-center">
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
           <p className="font-bold text-lg">No requests yet</p>
@@ -178,7 +195,7 @@ export default function CubicleRequests() {
         </Card>
       ) : (
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
-          {myRequests.map(req => (
+          {incidents.map(req => (
             <RequestRow key={req.id} req={req} showHistory={showHistory} />
           ))}
         </motion.div>

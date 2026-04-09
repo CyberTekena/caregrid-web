@@ -37,16 +37,16 @@ export default function LandingPage() {
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-white/10 dark:border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-           <div className="flex items-center gap-2 font-bold text-primary text-xl">
-             <ActivitySquare className="h-7 w-7 text-accent" />
-             CareGrid <span className="font-light">Babcock</span>
+           <div className="flex items-center gap-2 font-bold text-primary text-lg md:text-xl">
+             <ActivitySquare className="h-6 w-6 md:h-7 md:w-7 text-accent" />
+             BU CareGrid <span className="hidden sm:inline font-light">Babcock</span>
            </div>
            <div className="hidden md:flex items-center gap-8 font-medium text-sm text-foreground/80">
               <Link href="#features" className="hover:text-primary transition-colors">Features</Link>
               <Link href="#halls" className="hover:text-primary transition-colors">Hall Analytics</Link>
               <Link href="/login" className="hover:text-primary transition-colors">Personnel Login</Link>
            </div>
-           <Link href="/login" className={buttonVariants({ className: "bg-primary hover:bg-primary/90 text-white rounded-full px-6" })}>
+           <Link href="/login" className={buttonVariants({ className: "bg-primary hover:bg-primary/90 text-white rounded-full px-4 md:px-6 text-xs md:text-sm" })}>
               Launch Portal <ArrowRight className="w-4 h-4 ml-2" />
            </Link>
         </div>
@@ -77,20 +77,20 @@ export default function LandingPage() {
                </Badge>
             </motion.div>
             
-            <motion.h1 variants={itemVariants} className="text-5xl lg:text-7xl font-black tracking-tight leading-[1.1] text-foreground">
+            <motion.h1 variants={itemVariants} className="text-3xl md:text-5xl lg:text-7xl font-black tracking-tight leading-[1.1] text-foreground">
                Immediate response <br />
                in every <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">residence hall.</span>
             </motion.h1>
             
             <motion.p variants={itemVariants} className="text-lg lg:text-xl text-muted-foreground max-w-lg leading-relaxed">
-               Connecting Babcock students to rapid-response hall health cubicles. Report emergencies, track medications, and schedule general hospital appointments instantly.
+               Connecting Babcock students to rapid-response hall health cubicles through BU CareGrid. Report emergencies, track medications, and schedule general hospital appointments instantly.
             </motion.p>
             
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 mt-4">
-              <Link href="/login" className={buttonVariants({ size: "lg", className: "h-14 bg-primary hover:bg-primary/90 text-white rounded-full px-8 text-lg font-semibold shadow-lg shadow-primary/25 transition-transform hover:scale-105" })}>
+              <Link href="/login" className={buttonVariants({ size: "lg", className: "h-12 md:h-14 bg-primary hover:bg-primary/90 text-white rounded-full px-8 text-base md:text-lg font-semibold shadow-lg shadow-primary/25 transition-transform hover:scale-105" })}>
                  Student SOS Login
               </Link>
-              <Link href="/login" className={buttonVariants({ size: "lg", variant: "outline", className: "h-14 rounded-full px-8 text-lg font-semibold bg-background/50 backdrop-blur-md hover:bg-muted/50 transition-colors" })}>
+              <Link href="/login" className={buttonVariants({ size: "lg", variant: "outline", className: "h-12 md:h-14 rounded-full px-8 text-base md:text-lg font-semibold bg-background/50 backdrop-blur-md hover:bg-muted/50 transition-colors" })}>
                  Cubicle Direct <Navigation className="w-5 h-5 ml-2 text-primary" />
               </Link>
             </motion.div>

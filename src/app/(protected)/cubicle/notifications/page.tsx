@@ -1,14 +1,21 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Bell, AlertTriangle, Package, CheckCheck, Trash2, ShieldAlert, Clock, MoreVertical } from "lucide-react"
+import { Bell, AlertTriangle, Package, CheckCheck, Trash2, ShieldAlert, Clock, MoreVertical, Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useCurrentUser } from "@/hooks/use-current-user"
+import { useIncidents } from "@/hooks/use-incidents"
+import { useHalls } from "@/hooks/use-halls"
 
 export default function CubicleNotifications() {
+  const { user, loading: userLoading } = useCurrentUser()
+  const { halls, loading: hallsLoading } = useHalls()
+  const { incidents, loading: incidentsLoading } = useIncidents(user?.hall_id || undefined)
+
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -17,32 +24,56 @@ export default function CubicleNotifications() {
     }
   }
 
+  type NotificationItem = {
+    id: number
+    title: string
+    desc: string
+    type: string
+    time: string
+    unRead: boolean
+  }
+
+  const hallName = halls.find(h => h.id === user?.hall_id)?.name || user?.hall_id?.replace(/-/g, ' ') || 'your hall'
+  const activeIncident = incidents.find(i => i.status !== 'resolved')
+  const unreadCount = incidents.filter(i => i.status !== 'resolved').length
+
   const notifications = [
-    {
+    activeIncident ? {
       id: 1,
-      title: "Stock Alert: Salbutamol",
-      desc: "Inventory levels for Salbutamol Inhalers in Welch Hall Cubicle are critically low (2 units left).",
-      type: "inventory",
-      time: "5 mins ago",
+      title: "Emergency Alert",
+      desc: `${activeIncident.student_name || 'A student'} in ${activeIncident.room_number || 'their room'} requires immediate attention at ${hallName}.`,
+      type: "emergency",
+      time: "Just now",
       unRead: true
-    },
+    } : null,
     {
       id: 2,
-      title: "New Student Referral",
-      desc: "Michael Doe (RM 212) has been successfully referred to the Hospital Block B. Triage confirmed.",
-      type: "referral",
-      time: "1 hour ago",
-      unRead: true
+      title: "Operational Summary",
+      desc: `${unreadCount} open request${unreadCount === 1 ? '' : 's'} pending for ${hallName} cubicle.`,
+      type: "system",
+      time: "Now",
+      unRead: false
     },
     {
       id: 3,
-      title: "System Synchronization",
-      desc: "End-of-day operational logs for Welch Hall have been successfully synced with the Central Admin hub.",
-      type: "system",
-      time: "8 hours ago",
-      unRead: false
+      title: "Inventory Reminder",
+      desc: `Quick stock review recommended for ${hallName} supplies.`,
+      type: "inventory",
+      time: "15 mins ago",
+      unRead: unreadCount > 0
     }
-  ]
+  ].filter((item): item is NotificationItem => Boolean(item))
+
+  if (userLoading || hallsLoading || incidentsLoading) {
+    return (
+      <div className="flex-1 p-4 md:p-8 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Loading operations alerts...</p>
+        </div>
+      </div>
+    )
+  }
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -62,7 +93,7 @@ export default function CubicleNotifications() {
             <h1 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-2">
                Operations Alerts
             </h1>
-            <p className="text-muted-foreground mt-1">Real-time status updates and operational logs for Welch Hall hub.</p>
+            <p className="text-muted-foreground mt-1">Real-time status updates and operational logs for {hallName} hub.</p>
          </div>
          <div className="flex items-center gap-2 text-primary">
             <Button variant="outline" className="rounded-full bg-background/50 h-10 gap-2 border-border/50 text-xs font-bold">

@@ -49,7 +49,7 @@ export default function AdminSettings() {
             <Card className="border-border/50 bg-background/60 backdrop-blur-xl shadow-xl">
                <CardHeader className="border-b border-border/40">
                   <CardTitle>Institutional Authentication</CardTitle>
-                  <CardDescription>Configure how students and staff access the Babcock CareGrid platform.</CardDescription>
+                  <CardDescription>Configure how students and staff access the BU CareGrid platform.</CardDescription>
                </CardHeader>
                <CardContent className="pt-6 space-y-8">
                   

@@ -1,14 +1,21 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Bell, Pill, Calendar, AlertTriangle, ShieldCheck, CheckCheck, Trash2, MoreVertical } from "lucide-react"
+import { Bell, Pill, Calendar, AlertTriangle, ShieldCheck, CheckCheck, Trash2, MoreVertical, Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useCurrentUser } from "@/hooks/use-current-user"
+import { useMedications } from "@/hooks/use-medications"
+import { useIncidents } from "@/hooks/use-incidents"
 
 export default function StudentNotifications() {
+  const { user, loading: userLoading } = useCurrentUser()
+  const { meds, loading: medsLoading } = useMedications(user?.id ?? "")
+  const { incidents, loading: incidentsLoading } = useIncidents(user?.hall_id || undefined)
+
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -22,40 +29,56 @@ export default function StudentNotifications() {
     show: { opacity: 1, x: 0 }
   }
 
-  const mockNotifications = [
-    {
+  type NotificationItem = {
+    id: number
+    title: string
+    desc: string
+    type: string
+    time: string
+    unRead: boolean
+  }
+
+  const hallName = user?.hall_id?.replace(/-/g, ' ') || 'your hall'
+  const unreadMed = meds.find(m => !m.last_taken)
+  const activeIncident = incidents.find(i => i.status !== 'resolved')
+
+  const notifications = [
+    unreadMed ? {
       id: 1,
       title: "Medication Reminder",
-      desc: "It's time to take your Multivitamins dosage. Don't forget to mark it as taken in your dashboard.",
+      desc: `Time for ${unreadMed.name}. Scheduled for ${unreadMed.schedule_time}.`,
       type: "medication",
-      time: "10 mins ago",
+      time: "Now",
       unRead: true
-    },
-    {
+    } : null,
+    activeIncident ? {
       id: 2,
-      title: "Appointment Confirmed",
-      desc: "Your routine checkup with Dr. Adeyekun for Thursday, April 12 has been officially confirmed.",
-      type: "appointment",
-      time: "2 hours ago",
+      title: `Incident Alert in ${hallName}`,
+      desc: `${activeIncident.student_name || 'A student'} requires assistance in ${activeIncident.room_number || 'their room'}.`,
+      type: "emergency",
+      time: "Just now",
       unRead: true
-    },
+    } : null,
     {
       id: 3,
-      title: "Emergency Alert",
-      desc: "A medical responder has been deployed to Welch Hall. Please clear the corridor area.",
-      type: "emergency",
-      time: "5 hours ago",
-      unRead: false
-    },
-    {
-      id: 4,
-      title: "Security Update",
-      desc: "Your account was successfully logged in from a new Chrome browser on Windows.",
+      title: "System Update",
+      desc: `All health feeds are synced for ${hallName}.`,
       type: "security",
-      time: "1 day ago",
+      time: "Now",
       unRead: false
     }
-  ]
+  ].filter((item): item is NotificationItem => Boolean(item))
+
+  if (userLoading || medsLoading || incidentsLoading) {
+    return (
+      <div className="flex-1 p-4 md:p-8 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Loading notifications...</p>
+        </div>
+      </div>
+    )
+  }
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -97,7 +120,7 @@ export default function StudentNotifications() {
             </TabsList>
 
             <TabsContent value="all" className="space-y-3">
-               {mockNotifications.map((notif) => (
+               {notifications.map((notif) => (
                   <motion.div key={notif.id} variants={item}>
                      <Card className={`border-border/50 transition-all cursor-pointer group hover:bg-muted/30 ${notif.unRead ? 'bg-primary/5 border-primary/20 shadow-md ring-1 ring-primary/10' : 'bg-background/60'}`}>
                         <CardContent className="p-4 flex gap-4 items-start translate-x-0">

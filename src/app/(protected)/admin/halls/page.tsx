@@ -2,48 +2,54 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Building2, Search, Plus, Activity, ArrowRight, ShieldCheck, Navigation, Zap, Flame } from "lucide-react"
+import { Building2, Search, Plus, Activity, ArrowRight, ShieldCheck, Navigation, Zap, Flame, Loader2, AlertTriangle } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { HALLS } from "@/data/halls"
-
-// Static metadata per hall (staff name, population, density) — replace with API data when backend is ready
-const HALL_META: Record<string, { staff: string; population: number; density: number }> = {
-  "welch":           { staff: "Nurse Adeola",         population: 450, density: 85 },
-  "neal-wilson":     { staff: "Responder Chukwu",     population: 380, density: 30 },
-  "nelson-mandela":  { staff: "Nurse Emeka",           population: 410, density: 42 },
-  "winslow":         { staff: "Responder Tunde",       population: 360, density: 22 },
-  "gideon-troopers": { staff: "Nurse Bisi",            population: 420, density: 38 },
-  "bethel-splendor": { staff: "Responder Samuel",      population: 390, density: 55 },
-  "samuel-akande":   { staff: "Nurse Chidi",           population: 340, density: 18 },
-  "gamaliel":        { staff: "Responder Tolu",        population: 310, density: 12 },
-  "havilah-gold":    { staff: "Nurse Ngozi",           population: 520, density: 68 },
-  "crystal":         { staff: "Responder Amaka",       population: 480, density: 44 },
-  "ameyo-adadevoh":  { staff: "Nurse Funke",           population: 460, density: 33 },
-  "felicia-dada":    { staff: "Responder Sola",        population: 430, density: 61 },
-  "queen-esther":    { staff: "Nurse Ifeoma",          population: 370, density: 27 },
-  "justice-deborah": { staff: "Responder Chisom",      population: 350, density: 19 },
-  "white":           { staff: "Nurse Adaeze",          population: 400, density: 48 },
-  "nyberg":          { staff: "Responder Onyeka",      population: 290, density: 35 },
-  "ogden":           { staff: "Nurse Taiwo",           population: 320, density: 24 },
-  "platinum":        { staff: "N/A",                  population: 260, density: 0  },
-}
+import { useHalls } from "@/hooks/use-halls"
 
 export default function AdminHalls() {
   const [heatmapMode, setHeatmapMode] = useState(false)
+  const { halls, loading, error } = useHalls()
 
-  const halls = HALLS.map(h => ({
+  const hallsWithMeta = halls.map(h => ({
     id: h.id,
     name: h.name.replace(" Cubicle", ""),
     cubicleId: h.id.toUpperCase() + "-CUB",
-    status: h.status === "inactive" ? "Maintenance" : "Active",
-    staff: HALL_META[h.id]?.staff ?? "N/A",
-    population: HALL_META[h.id]?.population ?? 0,
-    density: HALL_META[h.id]?.density ?? 0,
+    status: h.status === "inactive" ? "Maintenance" : h.status === "busy" ? "Busy" : "Active",
+    staff: h.description ? h.description : "Assigned responder team",
+    population: 0,
+    density: h.status === "busy" ? 84 : h.status === "inactive" ? 18 : 54,
   }))
+
+  const busyHall = hallsWithMeta.find(h => h.status === 'Busy')
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex-1 p-4 md:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading hall data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex-1 p-4 md:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-4" />
+          <p className="text-destructive">Failed to load hall data</p>
+          <p className="text-sm text-muted-foreground mt-2">{error.message}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 p-4 md:p-8 space-y-8 max-w-[1200px] mx-auto w-full relative z-10 font-sans">
@@ -79,7 +85,7 @@ export default function AdminHalls() {
          </div>
          <div className="flex gap-2 w-full md:w-auto">
             <Button variant="outline" className="h-12 rounded-2xl bg-background/50 border-border/50 gap-2"><Navigation className="w-4 h-4" /> View Map</Button>
-            <Button variant="outline" className="h-12 rounded-2xl bg-background/50 border-border/50 gap-2 font-bold px-6">Total: 18 Nodes</Button>
+            <Button variant="outline" className="h-12 rounded-2xl bg-background/50 border-border/50 gap-2 font-bold px-6">Total: {hallsWithMeta.length} Nodes</Button>
          </div>
       </div>
 
@@ -99,14 +105,14 @@ export default function AdminHalls() {
                </div>
             </div>
             <p className="text-sm font-medium text-foreground/80 leading-relaxed max-w-2xl relative z-10">
-               Welch Hall is showing a <span className="font-black text-destructive">high density (85%)</span> cluster of incidents. 
-               Recommend temporary relocation of additional standby responders to Welch Node WELCH-CUB.
+               {busyHall ? `${busyHall.name} is showing a high density (${busyHall.density}%) cluster of incidents.` : "A hall node is showing elevated activity."} 
+               Recommend temporary relocation of additional standby responders to {busyHall ? `${busyHall.name} Node ${busyHall.cubicleId}` : "the busiest node"}.
             </p>
          </motion.div>
       )}
 
       <motion.div layout initial="hidden" animate="show" className="grid gap-6 md:grid-cols-2">
-         {halls.map((hall, idx) => (
+         {hallsWithMeta.map((hall, idx) => (
             <motion.div key={idx} layout variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} whileHover={{ scale: 1.01 }}>
                <Card className={`border-border/50 bg-background/60 backdrop-blur-xl shadow-lg h-full overflow-hidden relative group transition-all duration-500 ${heatmapMode && hall.density > 70 ? 'ring-2 ring-destructive/40 bg-destructive/5' : ''}`}>
                   

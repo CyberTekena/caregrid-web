@@ -20,7 +20,7 @@ export default function StudentAppointments() {
 
   const item = {
     hidden: { opacity: 0, scale: 0.95 },
-    show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 100 } }
+    show: { opacity: 1, scale: 1 }
   }
 
   return (
@@ -82,7 +82,7 @@ export default function StudentAppointments() {
                               </div>
                            </CardHeader>
                            <CardContent className="pb-4">
-                              <p className="text-sm text-muted-foreground mb-4">Department of Pulmonology & Respiratory Medicine, Main Block B.</p>
+                              <p className="text-sm text-muted-foreground mb-4">Department of Medicine, Main Block B.</p>
                               <div className="flex items-center gap-4">
                                  <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground/70 bg-muted/50 px-3 py-1.5 rounded-lg border border-white/10">
                                     <User className="w-3 h-3 text-primary" /> Specialist

@@ -49,50 +49,51 @@
 }
 
 :root {
-  /* Clean Light-First Backgrounds */
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(222, 47%, 11%);
+  /* Off White / UI Background */
+  --background: hsl(210, 40%, 98%);
+  /* Dark Text */
+  --foreground: hsl(210, 13%, 12%);
   
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(222, 47%, 11%);
+  --card-foreground: hsl(210, 13%, 12%);
   
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(222, 47%, 11%);
+  --popover-foreground: hsl(210, 13%, 12%);
   
-  /* Deep Teal Primary (Institution Trust) */
-  --primary: hsl(177, 78%, 25%);
+  /* Babcock Blue Primary */
+  --primary: hsl(217, 74%, 27%);
   --primary-foreground: hsl(0, 0%, 100%);
   
-  /* Medical Blue / Soft Neutrals for secondary */
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(221, 83%, 33%);
+  /* Deep Navy Secondary */
+  --secondary: hsl(215, 79%, 20%);
+  --secondary-foreground: hsl(0, 0%, 100%);
   
   --muted: hsl(210, 40%, 96%);
   --muted-foreground: hsl(215, 16%, 47%);
   
-  /* Medical Blue Accent */
-  --accent: hsl(221, 83%, 53%);
+  /* Babcock Gold Accent */
+  --accent: hsl(44, 67%, 50%);
   --accent-foreground: hsl(0, 0%, 100%);
   
-  /* Emergency Red */
+  /* Emergency Red - Preserved */
   --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(210, 40%, 98%);
   
   /* Soft borders */
   --border: hsl(214, 32%, 91%);
   --input: hsl(214, 32%, 91%);
-  --ring: hsl(177, 78%, 25%);
+  --ring: hsl(217, 74%, 27%);
   
   --radius: 0.75rem;
 
   --sidebar: hsl(0, 0%, 98%);
-  --sidebar-foreground: hsl(222, 47%, 11%);
-  --sidebar-primary: hsl(177, 78%, 25%);
+  --sidebar-foreground: hsl(210, 13%, 12%);
+  --sidebar-primary: hsl(217, 74%, 27%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(210, 40%, 92%);
-  --sidebar-accent-foreground: hsl(221, 83%, 33%);
+  --sidebar-accent: hsl(45, 74%, 59%); /* Soft Gold Highlight */
+  --sidebar-accent-foreground: hsl(215, 79%, 20%);
   --sidebar-border: hsl(214, 32%, 91%);
-  --sidebar-ring: hsl(177, 78%, 25%);
+  --sidebar-ring: hsl(217, 74%, 27%);
 }
 
 .dark {
@@ -106,33 +107,33 @@
   --popover: hsl(222, 47%, 11%);
   --popover-foreground: hsl(210, 40%, 98%);
   
-  --primary: hsl(177, 60%, 45%);
+  --primary: hsl(217, 60%, 45%);
   --primary-foreground: hsl(222, 47%, 8%);
   
-  --secondary: hsl(222, 47%, 15%);
+  --secondary: hsl(215, 50%, 30%);
   --secondary-foreground: hsl(210, 40%, 98%);
   
   --muted: hsl(222, 47%, 15%);
   --muted-foreground: hsl(215, 20%, 65%);
   
-  --accent: hsl(221, 83%, 53%);
-  --accent-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(44, 70%, 60%);
+  --accent-foreground: hsl(222, 47%, 8%);
   
   --destructive: hsl(0, 62%, 40%);
   --destructive-foreground: hsl(210, 40%, 98%);
   
   --border: hsl(222, 47%, 18%);
   --input: hsl(222, 47%, 18%);
-  --ring: hsl(177, 60%, 45%);
+  --ring: hsl(217, 60%, 45%);
   
   --sidebar: hsl(222, 47%, 8%);
   --sidebar-foreground: hsl(210, 40%, 98%);
-  --sidebar-primary: hsl(177, 60%, 45%);
+  --sidebar-primary: hsl(217, 60%, 45%);
   --sidebar-primary-foreground: hsl(222, 47%, 8%);
   --sidebar-accent: hsl(222, 47%, 15%);
   --sidebar-accent-foreground: hsl(210, 40%, 98%);
   --sidebar-border: hsl(222, 47%, 18%);
-  --sidebar-ring: hsl(177, 60%, 45%);
+  --sidebar-ring: hsl(217, 60%, 45%);
 }
 
 @layer base {

@@ -9,13 +9,37 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { MapModule } from "@/components/map-wrapper"
-import { HALLS, BABCOCK_HOSPITAL, BABCOCK_CENTER, hallsSortedByDistance, distanceMetres } from "@/data/halls"
+import { useCurrentUser } from "@/hooks/use-current-user"
+import { useHalls } from "@/hooks/use-halls"
+import { BABCOCK_HOSPITAL } from "@/data/halls"
 import type { HallCubicle } from "@/components/map-module"
 
-// Student's hall — in a real app this would come from auth context
-const STUDENT_HALL_ID = "welch"
-const STUDENT_HALL = HALLS.find(h => h.id === STUDENT_HALL_ID)!
-const STUDENT_LOCATION: [number, number] = [STUDENT_HALL.lat, STUDENT_HALL.lng]
+// Utility functions for distance calculation
+function distanceMetres(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371e3 // Earth's radius in metres
+  const φ1 = lat1 * Math.PI / 180
+  const φ2 = lat2 * Math.PI / 180
+  const Δφ = (lat2 - lat1) * Math.PI / 180
+  const Δλ = (lng2 - lng1) * Math.PI / 180
+
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+
+  return R * c
+}
+
+function hallsSortedByDistance(userLocation: [number, number], halls: any[]) {
+  return halls
+    .map(hall => ({
+      ...hall,
+      distance: distanceMetres(userLocation[0], userLocation[1], hall.lat, hall.lng)
+    }))
+    .sort((a, b) => a.distance - b.distance)
+}
+
+// Hall data is now loaded from backend via useHalls hook
 
 function formatDistance(m: number): string {
   if (m < 1000) return `${Math.round(m)}m`
@@ -29,10 +53,27 @@ function formatWalkTime(m: number): string {
 }
 
 export default function StudentMap() {
+  const { user, loading: userLoading } = useCurrentUser()
+  const { halls, loading: hallsLoading } = useHalls()
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<HallCubicle | null>(null)
 
-  const sorted = useMemo(() => hallsSortedByDistance(STUDENT_LOCATION), [])
+  // Get student's hall from their profile
+  const studentHall = useMemo(() => {
+    if (!user?.hall_id || !halls.length) return null
+    return halls.find(h => h.id === user.hall_id)
+  }, [user?.hall_id, halls])
+
+  // Student's location from their hall
+  const studentLocation: [number, number] | null = useMemo(() => {
+    if (!studentHall) return null
+    return [studentHall.lat, studentHall.lng]
+  }, [studentHall])
+
+  const sorted = useMemo(() => {
+    if (!studentLocation || !halls.length) return []
+    return hallsSortedByDistance(studentLocation, halls)
+  }, [studentLocation, halls])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return sorted
@@ -42,17 +83,51 @@ export default function StudentMap() {
 
   const nearest = sorted[0]
 
-  const activeRoute = selected
-    ? { from: STUDENT_LOCATION, to: [selected.lat, selected.lng] as [number, number] }
-    : nearest
-    ? { from: STUDENT_LOCATION, to: [nearest.lat, nearest.lng] as [number, number] }
+  const activeRoute = selected && studentLocation
+    ? { from: studentLocation, to: [selected.lat, selected.lng] as [number, number] }
+    : nearest && studentLocation
+    ? { from: studentLocation, to: [nearest.lat, nearest.lng] as [number, number] }
     : undefined
 
   const displayHall = selected ?? nearest
 
-  const distanceToDisplay = displayHall
-    ? distanceMetres(STUDENT_LOCATION, [displayHall.lat, displayHall.lng])
+  const distanceToDisplay = displayHall && studentLocation
+    ? distanceMetres(studentLocation[0], studentLocation[1], displayHall.lat, displayHall.lng)
     : 0
+
+  // Show loading state while data is loading
+  if (hallsLoading || userLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading campus map...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive font-bold">Unable to load your profile.</p>
+          <p className="text-muted-foreground">Please sign in again or refresh the page.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!studentLocation) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-foreground font-bold">Assigned hall not found.</p>
+          <p className="text-muted-foreground">Contact support if your hall assignment is missing.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-theme(spacing.16))] font-sans relative">
@@ -122,8 +197,8 @@ export default function StudentMap() {
       {/* Real Leaflet Map */}
       <div className="flex-1 relative">
         <MapModule
-          halls={HALLS}
-          userLocation={STUDENT_LOCATION}
+          halls={halls}
+          userLocation={studentLocation}
           activeRoute={activeRoute}
           hospital={BABCOCK_HOSPITAL}
           className="h-full w-full rounded-none"
@@ -208,7 +283,7 @@ export default function StudentMap() {
           <div>
             <p className="text-xs font-bold leading-none">Babcock Health Centre</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">
-              {formatDistance(distanceMetres(STUDENT_LOCATION, [BABCOCK_HOSPITAL.lat, BABCOCK_HOSPITAL.lng]))} away
+              {studentLocation ? formatDistance(distanceMetres(studentLocation[0], studentLocation[1], BABCOCK_HOSPITAL.lat, BABCOCK_HOSPITAL.lng)) : "Distance unavailable"} away
             </p>
           </div>
         </div>

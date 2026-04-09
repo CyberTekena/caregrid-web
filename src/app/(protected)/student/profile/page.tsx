@@ -2,7 +2,9 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { User, Mail, MapPin, Phone, ShieldCheck, FileText, Droplet, Activity, Edit3, Camera, QrCode, X, Download, Shield } from "lucide-react"
+import { User, Mail, MapPin, Phone, ShieldCheck, FileText, Droplet, Activity, Edit3, Camera, QrCode, X, Download, Shield, Loader2 } from "lucide-react"
+import { useCurrentUser } from "@/hooks/use-current-user"
+import { useHalls } from "@/hooks/use-halls"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,6 +15,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function StudentProfile() {
   const [showQr, setShowQr] = useState(false)
+  const { user, loading: userLoading } = useCurrentUser()
+  const { halls, loading: hallsLoading } = useHalls()
+
+  const hallName = halls.find(h => h.id === user?.hall_id)?.name.replace(" Cubicle", "") ?? "Unknown Hall"
+  const allergyLabel = user?.allergies?.[0] || "None"
+  const conditionLabel = user?.conditions?.[0] || "None"
+
+  if (userLoading || hallsLoading) {
+    return (
+      <div className="flex-1 p-4 md:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 p-4 md:p-8 space-y-8 max-w-[1200px] mx-auto w-full relative z-10 font-sans">
@@ -52,43 +71,28 @@ export default function StudentProfile() {
                 </div>
                 
                 <div className="text-center mb-6">
-                   <h2 className="text-2xl font-bold">Michael Doe</h2>
-                   <p className="text-sm font-medium text-primary mb-1">Matric: 19/0045</p>
-                   <p className="text-xs text-muted-foreground">Computer Science, 400L</p>
+                   <h2 className="text-2xl font-bold">{user?.full_name || 'Student Name'}</h2>
+                   <p className="text-sm font-medium text-primary mb-1">Matric: {user?.matric_number || 'N/A'}</p>
+                   <p className="text-xs text-muted-foreground">{hallName}{user?.room_number ? `, Room ${user.room_number}` : ''}</p>
                 </div>
 
                 <div className="space-y-3">
                    <div className="flex items-center gap-3 text-sm text-foreground/80 bg-muted/30 p-2.5 rounded-lg border border-white/10">
                       <Mail className="w-4 h-4 text-primary" />
-                      <span className="truncate">m.doe@student.babcock.edu.ng</span>
+                      <span className="truncate">{user?.email || 'No email available'}</span>
                    </div>
                    <div className="flex items-center gap-3 text-sm text-foreground/80 bg-muted/30 p-2.5 rounded-lg border border-white/10">
                       <Phone className="w-4 h-4 text-primary" />
-                      <span>+234 812 345 6789</span>
+                      <span>{user?.role === 'student' ? '+234 000 000 0000' : 'No phone available'}</span>
                    </div>
                    <div className="flex items-center gap-3 text-sm text-foreground/80 bg-muted/30 p-2.5 rounded-lg border border-white/10">
                       <MapPin className="w-4 h-4 text-primary" />
-                      <span>Welch Hall, Room 212</span>
+                      <span>{hallName}{user?.room_number ? `, Room ${user.room_number}` : ''}</span>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
-          <Card className="border-border/50 bg-background/60 backdrop-blur-xl shadow-lg">
-             <CardHeader className="pb-3">
-               <CardTitle className="text-sm flex items-center gap-2">
-                 <ShieldCheck className="w-4 h-4 text-green-500" /> Clearance Status
-               </CardTitle>
-             </CardHeader>
-             <CardContent>
-                <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/20 px-3 py-1.5 text-xs font-bold">
-                   Medically Cleared (Fall Semester)
-                </Badge>
-                <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
-                   Your medical records are up to date. Next standard checkup required in 142 days.
-                </p>
-             </CardContent>
-          </Card>
         </div>
 
         {/* Right Column: Detailed Forms & Tabs */}
@@ -102,7 +106,7 @@ export default function StudentProfile() {
                   </Button>
                </div>
                <CardDescription>
-                 This information is securely shared with the Babcock Medical Center.
+                 This information is securely shared with the Babcock Uni Teaching Hospital (BUTH).
                </CardDescription>
              </CardHeader>
              
@@ -118,11 +122,11 @@ export default function StudentProfile() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                        <div className="space-y-1 bg-primary/5 p-4 rounded-xl border border-primary/10">
                           <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest flex items-center gap-1.5"><Droplet className="w-3 h-3 text-red-500" /> Blood Group</span>
-                          <p className="text-2xl font-black">O+</p>
+                          <p className="text-2xl font-black">{user?.blood_group || 'N/A'}</p>
                        </div>
                        <div className="space-y-1 bg-accent/5 p-4 rounded-xl border border-accent/10">
                           <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest flex items-center gap-1.5"><Activity className="w-3 h-3 text-accent" /> Genotype</span>
-                          <p className="text-2xl font-black">AA</p>
+                          <p className="text-2xl font-black">{user?.genotype || 'N/A'}</p>
                        </div>
                        <div className="space-y-1 bg-muted/30 p-4 rounded-xl border border-border/50">
                           <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">H / W</span>
@@ -133,8 +137,8 @@ export default function StudentProfile() {
                     <div className="space-y-4 pt-4 border-t border-border/40">
                        <h3 className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Conditions & Allergies</h3>
                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline" className="border-destructive/30 bg-destructive/5 text-destructive py-1.5 px-3 font-bold">Allergy: Penicillin</Badge>
-                          <Badge variant="outline" className="border-amber-500/30 bg-amber-500/5 text-amber-600 py-1.5 px-3 font-bold">Mild Asthma</Badge>
+                          <Badge variant="outline" className="border-destructive/30 bg-destructive/5 text-destructive py-1.5 px-3 font-bold">Allergy: {allergyLabel}</Badge>
+                          <Badge variant="outline" className="border-amber-500/30 bg-amber-500/5 text-amber-600 py-1.5 px-3 font-bold">{conditionLabel}</Badge>
                        </div>
                     </div>
                  </TabsContent>
@@ -147,7 +151,7 @@ export default function StudentProfile() {
                          </div>
                          <div>
                             <h4 className="font-bold text-sm">Routine Physical Examination</h4>
-                            <p className="text-xs text-muted-foreground mt-1">Conducted by Dr. Adeyekun at Babcock Hospital.</p>
+                            <p className="text-xs text-muted-foreground mt-1">Conducted by Dr. Adeyekun at BUTH.</p>
                             <div className="mt-2 text-[10px] font-black text-primary uppercase tracking-widest">Oct 1{i}, 2023</div>
                          </div>
                       </div>
@@ -206,7 +210,7 @@ export default function StudentProfile() {
                      </Button>
                      <div className="flex items-center gap-3 mb-2">
                         <Shield className="w-6 h-6" />
-                        <h3 className="font-black text-xl tracking-tight">CareGrid Medical ID</h3>
+                        <h3 className="font-black text-xl tracking-tight">BU CareGrid Medical ID</h3>
                      </div>
                      <p className="text-white/70 text-sm font-medium">Babcock Institutional Health Record</p>
                   </div>

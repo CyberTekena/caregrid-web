@@ -32,6 +32,7 @@ import {
   SidebarFooter
 } from "@/components/ui/sidebar"
 import { useRouter, usePathname } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 
 // Menu Configurations for different roles
 const MENU_CONFIGS = {
@@ -86,13 +87,13 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="border-r border-border/40 bg-background/60 backdrop-blur-xl">
+    <Sidebar className="hidden md:flex border-r border-border/40 bg-background/60 backdrop-blur-xl">
       <SidebarHeader className="h-24 flex flex-col justify-center px-6 border-b border-border/40 space-y-1">
         <div className="flex items-center gap-3 font-black text-xl text-primary cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push('/')}>
           <div className="bg-primary/10 p-2 rounded-xl">
              <HeartPulse className="h-6 w-6 text-primary" />
           </div>
-          <span>CareGrid</span>
+          <span>BU CareGrid</span>
         </div>
         <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] pl-1 opacity-70">
            {getRoleBadge(role)}
@@ -131,8 +132,8 @@ export function AppSidebar() {
       <SidebarFooter className="p-4 border-t border-border/40 bg-muted/20">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton 
-              onClick={() => router.push('/login')}
+            <SidebarMenuButton
+              onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
               className="h-11 px-4 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors group"
             >
                <LogOut className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />

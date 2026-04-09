@@ -6,7 +6,7 @@ import { HallCubicle } from "@/components/map-module"
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const BABCOCK_HOSPITAL: { name: string; lat: number; lng: number } = {
-  name: "Babcock University Health Centre",
+  name: "Babcock Uni Teaching Hospital (BUTH)",
   // Located on campus — estimated from campus centre pending OSM node
   lat: 6.8935,
   lng: 3.7238,
@@ -19,21 +19,21 @@ export const HALLS: HallCubicle[] = [
   // ── Premium Male ─────────────────────────────────────────────
   {
     id: "welch",
-    name: "Welch Hall Cubicle",
+    name: "Welch Hall",
     lat: 6.8917506,
     lng: 3.7214357,
     status: "busy",
   },
   {
     id: "neal-wilson",
-    name: "Neal Wilson Hall Cubicle",
+    name: "Neal Wilson Hall",
     lat: 6.8930534,
     lng: 3.7217164,
     status: "active",
   },
   {
     id: "nelson-mandela",
-    name: "Nelson Mandela Hall Cubicle",
+    name: "Nelson Mandela Hall",
     lat: 6.8934727,
     lng: 3.7230408,
     status: "active",
@@ -42,36 +42,35 @@ export const HALLS: HallCubicle[] = [
   // ── Classic Male ─────────────────────────────────────────────
   {
     id: "winslow",
-    name: "Winslow Hall Cubicle",
+    name: "Winslow Hall",
     lat: 6.8940085,
     lng: 3.7216602,
     status: "active",
   },
   {
     id: "gideon-troopers",
-    name: "Gideon Troopers Hall Cubicle",
+    name: "Gideon Troopers Hall",
     lat: 6.8944243,
     lng: 3.7224928,
     status: "active",
   },
   {
     id: "bethel-splendor",
-    name: "Bethel Splendor Hall Cubicle",
+    name: "Bethel Splendor Hall",
     lat: 6.8946086,
     lng: 3.7230729,
     status: "active",
   },
   {
     id: "samuel-akande",
-    name: "Samuel Akande Hall Cubicle",
+    name: "Samuel Akande Hall",
     lat: 6.8941305,
     lng: 3.7236374,
     status: "active",
   },
   {
     id: "gamaliel",
-    name: "Gamaliel Hall Cubicle",
-    // Regular male hall — coordinates estimated from campus layout
+    name: "Gamaliel Hall",
     lat: 6.8952,
     lng: 3.7221,
     status: "active",
@@ -80,14 +79,14 @@ export const HALLS: HallCubicle[] = [
   // ── Premium Female ───────────────────────────────────────────
   {
     id: "havilah-gold",
-    name: "Havilah Gold Hall Cubicle",
+    name: "Havilah Gold Hall",
     lat: 6.8948787,
     lng: 3.7260748,
     status: "active",
   },
   {
     id: "crystal",
-    name: "Crystal Hall Cubicle",
+    name: "Crystal Hall",
     lat: 6.8928556,
     lng: 3.7277415,
     status: "active",
@@ -96,29 +95,28 @@ export const HALLS: HallCubicle[] = [
   // ── Classic Female ───────────────────────────────────────────
   {
     id: "ameyo-adadevoh",
-    name: "Ameyo Adadevoh Hall Cubicle",
+    name: "Ameyo Adadevoh Hall",
     lat: 6.8949448,
     lng: 3.7249274,
     status: "active",
   },
   {
     id: "felicia-dada",
-    name: "Felicia Adebisi Dada Hall Cubicle",
+    name: "Felicia Adebisi Dada Hall",
     lat: 6.8936738,
     lng: 3.7249784,
     status: "active",
   },
   {
     id: "queen-esther",
-    name: "Queen Esther Hall Cubicle",
+    name: "Queen Esther Hall",
     lat: 6.8929791,
     lng: 3.7247012,
     status: "busy",
   },
   {
     id: "justice-deborah",
-    name: "Justice Deborah Hall Cubicle",
-    // Classic female hall — coordinates estimated from campus layout
+    name: "Justice Deborah Hall",
     lat: 6.8932,
     lng: 3.7241,
     status: "active",
@@ -127,28 +125,28 @@ export const HALLS: HallCubicle[] = [
   // ── Regular Female ───────────────────────────────────────────
   {
     id: "white",
-    name: "White Hall Cubicle",
+    name: "White Hall",
     lat: 6.8937701,
     lng: 3.7263304,
     status: "active",
   },
   {
     id: "nyberg",
-    name: "Nyberg Hall Cubicle",
+    name: "Nyberg Hall",
     lat: 6.8925971,
     lng: 3.7253785,
     status: "active",
   },
   {
     id: "ogden",
-    name: "Ogden Hall Cubicle",
+    name: "Ogden Hall",
     lat: 6.8928285,
     lng: 3.7263810,
     status: "active",
   },
   {
     id: "platinum",
-    name: "Platinum Hall Cubicle",
+    name: "Platinum Hall",
     lat: 6.8924519,
     lng: 3.7274199,
     status: "inactive",

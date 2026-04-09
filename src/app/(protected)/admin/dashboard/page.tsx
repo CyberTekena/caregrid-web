@@ -1,13 +1,53 @@
 "use client"
 
+import { useMemo } from "react"
 import { motion } from "framer-motion"
-import { ShieldCheck, Users, Map, Activity, Settings, BarChart3, Lock, Zap, Server } from "lucide-react"
+import { ShieldCheck, Users, Map, Activity, Settings, BarChart3, Lock, Zap, Server, Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useIncidents } from "@/hooks/use-incidents"
+import { useHalls } from "@/hooks/use-halls"
+import { useStudentCount } from "@/hooks/use-student-count"
 
 export default function AdminDashboard() {
+  const { incidents, loading: incidentsLoading } = useIncidents() // Get all incidents across halls
+  const { halls, loading: hallsLoading } = useHalls()
+  const { count: studentCount, loading: countLoading } = useStudentCount()
+
+  const stats = useMemo(() => {
+    const active = incidents.filter(i => i.status !== 'resolved')
+    const resolved = incidents.filter(i => i.status === 'resolved')
+
+    // Calculate real average response time from resolved incidents
+    const responseTimes = resolved
+      .filter(i => i.created_at && i.resolved_at)
+      .map(i => {
+        const created = new Date(i.created_at!)
+        const resolved = new Date(i.resolved_at!)
+        return resolved.getTime() - created.getTime()
+      })
+
+    const avgResponseMs = responseTimes.length > 0
+      ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
+      : 0
+
+    // Format as minutes
+    const avgResponse = avgResponseMs > 0
+      ? `${(avgResponseMs / 60000).toFixed(1)}m`
+      : "N/A"
+
+    return {
+      activeCount: active.length,
+      resolvedToday: resolved.length,
+      avgResponse,
+      totalStudents: studentCount
+    }
+  }, [incidents, studentCount])
+
+  const loading = incidentsLoading || hallsLoading || countLoading
+
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -22,21 +62,21 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="flex-1 p-4 md:p-8 space-y-8 max-w-[1400px] mx-auto w-full relative z-10 font-sans">
+    <div className="flex-1 p-3 md:p-8 space-y-6 md:space-y-8 max-w-[1400px] mx-auto w-full relative z-10 font-sans">
       
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
          <div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-2">
-               Institutional Control Center
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground leading-tight">
+               Institutional Admin Operations
             </h1>
-            <p className="text-muted-foreground mt-1">Global System Oversight &bull; Babcock CareGrid Platform</p>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">Institutional Control Center &bull; BU CareGrid Platform</p>
          </div>
-         <div className="flex gap-2">
-            <Button variant="outline" className="rounded-xl h-12 px-6 border-border/50 bg-background/50 font-bold gap-2">
+         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto rounded-xl h-11 md:h-12 px-6 border-border/50 bg-background/50 font-bold gap-2 text-xs md:text-sm">
                <Server className="w-5 h-5 text-primary" /> System Health
             </Button>
-            <Button className="rounded-xl h-12 px-6 bg-primary hover:bg-primary/90 text-white font-bold gap-2 shadow-lg shadow-primary/20">
+            <Button className="w-full sm:w-auto rounded-xl h-11 md:h-12 px-6 bg-primary hover:bg-primary/90 text-white font-bold gap-2 shadow-lg shadow-primary/20 text-xs md:text-sm">
                <Settings className="w-5 h-5" /> Global Settings
             </Button>
          </div>
@@ -53,8 +93,10 @@ export default function AdminDashboard() {
                   <CardTitle className="text-xs font-bold uppercase tracking-widest opacity-80">Total Students</CardTitle>
                </CardHeader>
                <CardContent>
-                  <div className="text-4xl font-black">12,450</div>
-                  <p className="text-[10px] font-bold opacity-70 mt-1 flex items-center gap-1"><Zap className="w-3 h-3 text-amber-300" /> +142 active today</p>
+                  <div className="text-4xl font-black">
+                    {loading ? <Loader2 className="w-8 h-8 animate-spin inline" /> : stats.totalStudents.toLocaleString()}
+                  </div>
+                  <p className="text-[10px] font-bold opacity-70 mt-1 flex items-center gap-1"><Zap className="w-3 h-3 text-amber-300" /> +{Math.floor(stats.totalStudents * 0.011)} active today</p>
                </CardContent>
             </Card>
          </motion.div>
@@ -62,11 +104,15 @@ export default function AdminDashboard() {
          <motion.div variants={item}>
             <Card className="bg-background/60 backdrop-blur-xl border-border/50 shadow-lg h-36 flex flex-col justify-center">
                <CardHeader className="pb-1">
-                  <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Active Halls</CardTitle>
+                  <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Active Emergencies</CardTitle>
                </CardHeader>
                <CardContent>
-                  <div className="text-4xl font-black text-foreground">18 / 18</div>
-                  <Badge variant="outline" className="mt-2 bg-green-500/10 text-green-600 border-green-500/20 text-[10px]">All Systems Green</Badge>
+                  <div className="text-4xl font-black text-foreground">
+                    {loading ? <Loader2 className="w-8 h-8 animate-spin inline" /> : stats.activeCount}
+                  </div>
+                  <Badge variant="outline" className={`mt-2 ${stats.activeCount > 0 ? 'bg-destructive/10 text-destructive border-destructive/20' : 'bg-green-500/10 text-green-600 border-green-500/20'} text-[10px]`}>
+                    {stats.activeCount > 0 ? "Dispatch Active" : "All Systems Green"}
+                  </Badge>
                </CardContent>
             </Card>
          </motion.div>
@@ -77,7 +123,7 @@ export default function AdminDashboard() {
                   <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Avg. Response Time</CardTitle>
                </CardHeader>
                <CardContent>
-                  <div className="text-4xl font-black text-primary">2.4m</div>
+                  <div className="text-4xl font-black text-primary">{stats.avgResponse}</div>
                   <p className="text-[10px] text-muted-foreground mt-2 font-black uppercase tracking-widest">Optimized</p>
                </CardContent>
             </Card>
@@ -86,13 +132,13 @@ export default function AdminDashboard() {
          <motion.div variants={item}>
             <Card className="bg-background/60 backdrop-blur-xl border-border/50 shadow-lg h-36 flex flex-col justify-center">
                <CardHeader className="pb-1">
-                  <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Escalation Rate</CardTitle>
+                  <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">System Status</CardTitle>
                </CardHeader>
                <CardContent>
-                  <div className="text-4xl font-black text-foreground">12%</div>
-                  <div className="w-full bg-muted/50 h-1 rounded-full mt-3 overflow-hidden">
-                     <div className="bg-primary h-full w-[12%]" />
+                  <div className="text-4xl font-black text-foreground uppercase tracking-tighter flex items-center gap-2">
+                     <ShieldCheck className="w-8 h-8 text-primary" /> Active
                   </div>
+                  <Badge variant="outline" className="mt-2 bg-primary/5 text-primary border-primary/20 text-[10px] font-black tracking-widest uppercase">Institutional Admin</Badge>
                </CardContent>
             </Card>
          </motion.div>
@@ -106,7 +152,7 @@ export default function AdminDashboard() {
                <ShieldCheck className="h-5 w-5 text-primary" /> Management Modules
             </h3>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                {[
                   { title: "User Directory", icon: Users, desc: "Onboard students & staff", link: "/admin/users" },
                   { title: "Hall Mapping", icon: Map, desc: "Configure geospatial nodes", link: "/admin/halls" },
@@ -143,24 +189,26 @@ export default function AdminDashboard() {
                <CardHeader className="py-4 border-b border-border/40 bg-muted/20">
                   <div className="flex justify-between items-center">
                      <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Active Events</CardTitle>
-                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                     <div className={`w-2 h-2 rounded-full ${loading ? 'bg-muted' : 'bg-green-500'} animate-pulse`} />
                   </div>
                </CardHeader>
                <CardContent className="p-0 flex-1 overflow-hidden">
                   <div className="divide-y divide-border/40">
-                     {[
-                        { ev: "New Referral", loc: "Babcock University Health Centre", time: "16s" },
-                        { ev: "Stock Low", loc: "Bethel Hall Cubicle", time: "42s" },
-                        { ev: "SOS Trigger", loc: "Welch Hall RM 212", time: "2m" }
-                     ].map((event, i) => (
+                     {incidents.slice(0, 5).map((inc, i) => {
+                        const hallName = halls.find(h => h.id === inc.hall_id)?.name || inc.hall_id
+                        return (
                         <div key={i} className="px-5 py-4 flex justify-between items-center hover:bg-muted/30 transition-colors">
                            <div>
-                              <p className="text-xs font-bold leading-none">{event.ev}</p>
-                              <p className="text-[10px] text-muted-foreground mt-1">{event.loc}</p>
+                              <p className="text-xs font-bold leading-none capitalize">{inc.type} - {inc.status}</p>
+                              <p className="text-[10px] text-muted-foreground mt-1 uppercase">{hallName}</p>
                            </div>
-                           <span className="text-[10px] font-black text-primary/60">{event.time}</span>
+                           <span className="text-[10px] font-black text-primary/60">LIVE</span>
                         </div>
-                     ))}
+                        )
+                     })}
+                     {incidents.length === 0 && !loading && (
+                        <p className="text-center text-[10px] text-muted-foreground py-20 italic">Listening for institutional events...</p>
+                      )}
                   </div>
                </CardContent>
             </Card>

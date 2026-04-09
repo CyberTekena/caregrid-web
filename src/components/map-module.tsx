@@ -24,47 +24,108 @@ function makeHouseIcon(color: string) {
 }
 
 const HOUSE_ICONS = {
-  active:   makeHouseIcon("#16a34a"), // green
-  busy:     makeHouseIcon("#d97706"), // amber
-  inactive: makeHouseIcon("#6b7280"), // gray
+  active:   makeHouseIcon("#123A78"), // Babcock Blue
+  busy:     makeHouseIcon("#D4A62A"), // Babcock Gold
+  inactive: makeHouseIcon("#94a3b8"), // Slate gray
 }
 
 const HOSPITAL_ICON = L.divIcon({
   className: "",
   html: `
-    <div style="filter:drop-shadow(0 2px 6px rgba(220,38,38,0.5))">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="34" height="34">
-        <rect x="2" y="2" width="20" height="20" rx="3" fill="#dc2626"/>
-        <path fill="white" d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4z"/>
-      </svg>
+    <div style="filter:drop-shadow(0 4px 12px rgba(18,58,120,0.3))">
+      <div style="
+        width: 38px; height: 38px;
+        background: white;
+        border: 3px solid #123A78;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: inset 0 0 0 2px white;
+      ">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+          <path fill="#123A78" d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4z"/>
+        </svg>
+      </div>
     </div>`,
-  iconSize: [34, 34],
-  iconAnchor: [17, 34],
-  popupAnchor: [0, -36],
+  iconSize: [38, 38],
+  iconAnchor: [19, 38],
+  popupAnchor: [0, -40],
 })
 
 const YOU_ARE_HERE_ICON = L.divIcon({
   className: "",
   html: `
-    <div style="position:relative;width:22px;height:22px">
+    <div style="position:relative;width:24px;height:24px">
       <div style="
-        position:absolute;inset:-10px;
-        background:rgba(37,99,235,0.2);
+        position:absolute;inset:-12px;
+        background:rgba(18,58,120,0.25);
         border-radius:50%;
-        animation:ping 1.2s cubic-bezier(0,0,0.2,1) infinite
+        animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite
       "></div>
       <div style="
-        width:22px;height:22px;
-        background:#2563eb;
+        width:24px;height:24px;
+        background:#123A78;
+        border-radius:50%;
+        border:2px solid white;
+        box-shadow: 0 4px 12px rgba(18,58,120,0.4);
+        position:relative;z-index:2;
+        display:flex; align-items:center; justify-content:center;
+      ">
+         <div style="width:8px; height:8px; background:white; border-radius:50%; opacity:0.8"></div>
+      </div>
+    </div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -16],
+})
+
+const INCIDENT_ICON = L.divIcon({
+  className: "",
+  html: `
+    <div style="position:relative;width:32px;height:32px">
+      <div style="
+        position:absolute;inset:-8px;
+        background:rgba(239,68,68,0.4);
+        border-radius:50%;
+        animation:pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite
+      "></div>
+      <div style="
+        width:32px;height:32px;
+        background:#ef4444;
         border-radius:50%;
         border:3px solid white;
-        box-shadow:0 2px 8px rgba(37,99,235,0.5);
-        position:relative;z-index:1
-      "></div>
+        box-shadow: 0 4px 12px rgba(239,68,68,0.5);
+        display:flex; align-items:center; justify-content:center;
+        color:white;
+      ">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+          <path d="M12 9v4"/><path d="M12 17h.01"/><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+        </svg>
+      </div>
     </div>`,
-  iconSize: [22, 22],
-  iconAnchor: [11, 11],
-  popupAnchor: [0, -14],
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+})
+
+const RESPONDER_ICON = L.divIcon({
+  className: "",
+  html: `
+    <div style="position:relative;width:32px;height:32px">
+      <div style="
+        width:32px;height:32px;
+        background:#123A78;
+        border-radius:10px;
+        border:2px solid white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display:flex; align-items:center; justify-content:center;
+        color:white;
+      ">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
+          <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><polyline points="13 11 9 17 15 17 11 23"/>
+        </svg>
+      </div>
+    </div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
 })
 
 // ─── Inner components ───────────────────────────────────────────────────────
@@ -151,7 +212,7 @@ function WalkingRoute({ from, to }: { from: [number, number]; to: [number, numbe
   return (
     <Polyline
       positions={coords}
-      pathOptions={{ color: "#2563eb", weight: 4, dashArray: "10, 6", lineCap: "round" }}
+      pathOptions={{ color: "#123A78", weight: 4, dashArray: "10, 6", lineCap: "round" }}
     />
   )
 }
@@ -166,10 +227,19 @@ export type HallCubicle = {
   status: "active" | "inactive" | "busy"
 }
 
+export type IncidentGeo = {
+  id: string
+  lat: number
+  lng: number
+  type: string
+}
+
 export type MapModuleProps = {
   halls: HallCubicle[]
   userLocation?: [number, number]
   activeRoute?: { from: [number, number]; to: [number, number] }
+  activeIncidents?: IncidentGeo[]
+  responderLocation?: [number, number]
   hospital?: { name: string; lat: number; lng: number }
   className?: string
   onHallClick?: (hall: HallCubicle) => void
@@ -180,8 +250,8 @@ export type MapModuleProps = {
 const DEFAULT_CENTER: [number, number] = [6.8937, 3.7247]
 
 const BABCOCK_BOUNDS: [[number, number], [number, number]] = [
-  [6.889, 3.719],
-  [6.897, 3.730],
+  [6.891, 3.721],
+  [6.8955, 3.728],
 ]
 
 // ─── Main component ─────────────────────────────────────────────────────────
@@ -190,6 +260,8 @@ export default function MapModule({
   halls,
   userLocation,
   activeRoute,
+  activeIncidents,
+  responderLocation,
   hospital,
   className,
   onHallClick,
@@ -214,9 +286,9 @@ export default function MapModule({
     <div className={`relative overflow-hidden rounded-lg shadow-sm border border-border/50 z-0 ${className || "h-[400px]"}`}>
       <MapContainer
         center={center}
-        zoom={17}
-        minZoom={16}
-        maxZoom={18}
+        zoom={19.5}
+        minZoom={18}
+        maxZoom={21}
         maxBounds={BABCOCK_BOUNDS}
         maxBoundsViscosity={1.0}
         scrollWheelZoom={true}
@@ -237,15 +309,15 @@ export default function MapModule({
           <Marker
             key={hall.id}
             position={[hall.lat, hall.lng]}
-            icon={HOUSE_ICONS[hall.status]}
+            icon={HOUSE_ICONS[hall.status as keyof typeof HOUSE_ICONS]}
             eventHandlers={{ click: () => onHallClick?.(hall) }}
           >
             <Popup>
               <div className="font-sans min-w-[140px]">
-                <span className="block font-bold text-sm mb-1">{hall.name.replace(" Cubicle", "")}</span>
+                <span className="block font-bold text-sm mb-1">{hall.name}</span>
                 <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                  hall.status === "active"   ? "bg-green-100 text-green-700" :
-                  hall.status === "busy"     ? "bg-amber-100 text-amber-700" :
+                  hall.status === "active"   ? "bg-primary/10 text-primary" :
+                  hall.status === "busy"     ? "bg-accent/10 text-accent" :
                                                "bg-gray-100 text-gray-600"
                 }`}>
                   {hall.status.toUpperCase()}
@@ -260,9 +332,9 @@ export default function MapModule({
           <Marker position={[hospital.lat, hospital.lng]} icon={HOSPITAL_ICON}>
             <Popup>
               <div className="font-sans min-w-[160px]">
-                <span className="block font-bold text-sm text-red-700 mb-1">{hospital.name}</span>
-                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-600">
-                  HEALTH CENTRE
+                <span className="block font-bold text-sm text-primary mb-1">{hospital.name}</span>
+                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/5 text-primary">
+                  BUTH MAIN CAMPUS
                 </span>
               </div>
             </Popup>
@@ -281,6 +353,35 @@ export default function MapModule({
         {/* Real OSRM walking route */}
         {activeRoute && (
           <WalkingRoute from={activeRoute.from} to={activeRoute.to} />
+        )}
+
+        {/* Active Emergency Incidents */}
+        {activeIncidents?.map((inc) => (
+          <Marker
+            key={inc.id}
+            position={[inc.lat, inc.lng]}
+            icon={INCIDENT_ICON}
+          >
+            <Popup>
+              <div className="font-bold text-destructive">
+                ACTIVE {inc.type.toUpperCase()}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* Live Responder Position */}
+        {responderLocation && (
+          <Marker
+            position={responderLocation}
+            icon={RESPONDER_ICON}
+          >
+            <Popup>
+              <div className="font-bold text-primary">
+                RESPONDER EN-ROUTE
+              </div>
+            </Popup>
+          </Marker>
         )}
       </MapContainer>
     </div>

@@ -1,15 +1,24 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
-import { Users, Search, Filter, Plus, MoreVertical, Mail, Shield, GraduationCap, Building2 } from "lucide-react"
+import { Users, Search, Filter, Plus, MoreVertical, Mail, Shield, GraduationCap, Building2, Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useAllUsers } from "@/hooks/use-all-users"
+import { useHalls } from "@/hooks/use-halls"
 
 export default function AdminUsers() {
+  const [search, setSearch] = useState("")
+  const { users, loading: usersLoading } = useAllUsers()
+  const { halls, loading: hallsLoading } = useHalls()
+
+  const loading = usersLoading || hallsLoading
+
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -18,12 +27,30 @@ export default function AdminUsers() {
     }
   }
 
-  const users = [
-    { name: "Michael Doe", email: "m.doe@student.babcock.edu.ng", role: "Student", status: "Active", hall: "Welch Hall" },
-    { name: "Nurse Adeola", email: "adeola.n@staff.babcock.edu.ng", role: "Cubicle Staff", status: "Active", hall: "Welch Hall" },
-    { name: "Dr. Oluwafemi", email: "femi.o@hospital.babcock.edu.ng", role: "Hospital", status: "Active", hall: "Main Clinic" },
-    { name: "Admin Sarah", email: "sarah.a@admin.babcock.edu.ng", role: "Admin", status: "Active", hall: "VC Block" },
-  ]
+  const getHallName = (hallId: string | null) => {
+    if (!hallId) return "Not Assigned"
+    const hall = halls.find(h => h.id === hallId)
+    return hall ? hall.name.replace(" Cubicle", "") : hallId
+  }
+
+  const displayUsers = users.map(user => ({
+    id: user.id,
+    name: user.full_name || "Unknown",
+    email: user.email || "No email",
+    role: user.role === 'student' ? 'Student' : user.role === 'cubicle' ? 'Cubicle Staff' : user.role === 'admin' ? 'Admin' : 'Hospital',
+    status: "Active", // For now, assume all are active
+    hall: getHallName(user.hall_id)
+  }))
+
+  const filteredUsers = displayUsers.filter((user) => {
+    const query = search.toLowerCase()
+    return (
+      user.name.toLowerCase().includes(query) ||
+      user.email.toLowerCase().includes(query) ||
+      user.hall.toLowerCase().includes(query) ||
+      user.role.toLowerCase().includes(query)
+    )
+  })
 
   const getRoleIcon = (role: string) => {
     switch(role) {
@@ -54,7 +81,12 @@ export default function AdminUsers() {
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between pb-2">
          <div className="relative w-full md:w-96 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <Input placeholder="Search by name, email or matric..." className="pl-11 h-12 bg-background/50 border-border/50 rounded-2xl" />
+            <Input
+              placeholder="Search by name, email or matric..."
+              className="pl-11 h-12 bg-background/50 border-border/50 rounded-2xl"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
          </div>
          <div className="flex gap-2 w-full md:w-auto">
             <Tabs defaultValue="all" className="w-auto">
@@ -68,9 +100,14 @@ export default function AdminUsers() {
          </div>
       </div>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4">
-         {users.map((user, idx) => (
-            <motion.div key={idx} variants={{ hidden: { opacity: 0, scale: 0.98 }, show: { opacity: 1, scale: 1 } }}>
+      {loading ? (
+         <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+         </div>
+      ) : (
+         <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4">
+            {filteredUsers.map((user, idx) => (
+               <motion.div key={idx} variants={{ hidden: { opacity: 0, scale: 0.98 }, show: { opacity: 1, scale: 1 } }}>
                <Card className="border-border/50 bg-background/60 backdrop-blur-xl shadow-md hover:shadow-lg transition-all cursor-pointer group">
                   <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-6">
                      <div className="flex items-center gap-4 flex-1">
@@ -102,6 +139,7 @@ export default function AdminUsers() {
             </motion.div>
          ))}
       </motion.div>
+      )}
     </div>
   )
 }

@@ -1,51 +1,104 @@
 "use client"
 
-import { Activity, Droplet, HeartPulse, Pill, Calendar as CalendarIcon, Clock, ArrowRight, CheckCircle2, FileText, Bell, Navigation, MapPin } from "lucide-react"
+import { useState } from "react"
+import { Activity, Droplet, HeartPulse, Pill, Calendar as CalendarIcon, Clock, ArrowRight, CheckCircle2, FileText, Bell, Navigation, MapPin, Loader2, AlertCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { useCurrentUser } from "@/hooks/use-current-user"
+import { useHalls } from "@/hooks/use-halls"
+import { useMedications } from "@/hooks/use-medications"
 
 export default function StudentDashboard() {
+   const { user, loading: userLoading } = useCurrentUser()
+   const { halls, loading: hallsLoading } = useHalls()
+   const { meds, loading: medsLoading, markTaken } = useMedications(user?.id ?? "")
+   const [loading, setLoading] = useState(false)
 
-   const container: any = {
-     hidden: { opacity: 0 },
-     show: {
-       opacity: 1,
-       transition: { staggerChildren: 0.1 }
-     }
+   const studentHallName = halls.find(hall => hall.id === user?.hall_id)?.name.replace(" Cubicle", "") ?? "Unknown Hall"
+   const greetingName = user?.full_name?.split(' ')[0] ?? "Student"
+   const matricNumber = user?.matric_number ?? "N/A"
+   const profileReady = !userLoading && !hallsLoading
+
+   const container = {
+      hidden: { opacity: 0 },
+      show: {
+         opacity: 1,
+         transition: {
+            staggerChildren: 0.1
+         }
+      }
    }
 
-   const item: any = {
-     hidden: { opacity: 0, y: 20 },
-     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+   const item = {
+      hidden: { opacity: 0, y: 20 },
+      show: { opacity: 1, y: 0 }
+   }
+
+   if (userLoading || hallsLoading) {
+      return (
+         <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+            <div className="text-center space-y-4">
+               <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+               <p className="text-muted-foreground">Loading your dashboard...</p>
+            </div>
+         </div>
+      )
+   }
+
+   if (!user) {
+      return (
+         <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+            <div className="text-center space-y-4">
+               <AlertCircle className="w-8 h-8 text-destructive mx-auto" />
+               <p className="text-muted-foreground">Unable to load user profile. Please try refreshing.</p>
+            </div>
+         </div>
+      )
    }
 
    return (
-      <div className="flex-1 p-4 md:p-8 space-y-8 max-w-[1400px] mx-auto w-full relative z-10 font-sans">
+      <div className="flex-1 p-3 md:p-8 space-y-6 md:space-y-8 max-w-[1400px] mx-auto w-full relative z-10 font-sans">
          
          {/* Top Header Section */}
-         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center bg-background/60 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-lg shadow-black/5">
-            <div>
-               <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                  Welcome back, Michael <span className="inline-flex w-3 h-3 rounded-full bg-green-500 animate-pulse ml-2" />
+         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row justify-between items-center bg-background/60 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-white/20 shadow-2xl shadow-black/5 gap-6 md:gap-8 relative overflow-hidden">
+            <div className="flex-1 text-center lg:text-left">
+               <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tighter text-foreground flex items-center justify-center lg:justify-start gap-3">
+                  Welcome back, {greetingName} <span className="inline-flex w-3 h-3 rounded-full bg-green-500 animate-pulse ml-1" />
                </h1>
-               <p className="text-muted-foreground mt-1">Matric: 19/0045 &nbsp;|&nbsp; Welch Hall, Rm 212</p>
+               <p className="text-muted-foreground mt-2 md:mt-3 font-medium text-base md:text-lg flex items-center justify-center lg:justify-start gap-2">
+                  <MapPin className="w-4 h-4 text-primary" /> {studentHallName} &bull; <span className="text-primary/60 font-bold tracking-widest text-[10px] md:text-xs uppercase">Matric: {matricNumber}</span>
+               </p>
             </div>
             
-            <div className="flex items-center gap-4">
-               <Button variant="outline" size="icon" className="rounded-full bg-background/50 backdrop-blur-md">
-                 <Bell className="w-5 h-5 text-muted-foreground" />
-               </Button>
-               
-               {/* SOS Primary CTA */}
-               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                 <Link href="/student/emergency" className={buttonVariants({ variant: "destructive", className: "bg-destructive hover:bg-destructive/90 text-white shadow-xl shadow-destructive/20 rounded-full h-12 px-6 border border-destructive/50" })}>
-                       <HeartPulse className="mr-2 h-5 w-5 animate-pulse" />
-                       Emergency SOS
+            <div className="flex items-center gap-6 md:gap-10">
+               {/* THE BIG RED BUTTON - Optimized Padding & Spacing */}
+               <div className="relative">
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }} 
+                    whileTap={{ scale: 0.95 }}
+                    className="relative cursor-pointer"
+                  >
+                    <div className="absolute -inset-6 bg-destructive/15 rounded-full animate-pulse" />
+                    <div className="absolute -inset-3 bg-destructive/10 rounded-full animate-ping" />
+                    <Link 
+                      href="/student/emergency" 
+                      className="relative flex flex-col items-center justify-center w-32 h-32 md:w-36 md:h-36 rounded-full bg-destructive hover:bg-destructive/95 text-white shadow-[0_0_60px_rgba(239,68,68,0.4)] border-4 border-white/30 transition-all duration-500 overflow-hidden group"
+                    >
+                       <HeartPulse className="h-10 w-10 md:h-12 md:w-12 animate-pulse mb-1 group-hover:scale-110 transition-transform" />
+                       <span className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em]">Trigger SOS</span>
+                       <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
                     </Link>
-               </motion.div>
+                  </motion.div>
+               </div>
+
+               <div className="flex items-center gap-4 border-l border-border/40 pl-6 md:pl-8 h-12 md:h-16">
+                  <Button variant="outline" size="icon" className="rounded-2xl h-12 w-12 md:h-16 md:w-16 bg-background/40 backdrop-blur-md border-border/50 hover:bg-background/80 transition-all shadow-lg hover:shadow-primary/5 group">
+                    <Bell className="w-6 h-6 md:w-7 md:h-7 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </Button>
+               </div>
             </div>
          </motion.div>
 
@@ -66,10 +119,10 @@ export default function StudentDashboard() {
                   </CardHeader>
                   <CardContent className="relative z-10">
                      <div className="text-4xl font-black flex items-center gap-2">
-                        O+ <Droplet className="h-6 w-6 fill-red-400 text-red-400" />
+                        {user?.blood_group || 'N/A'} <Droplet className="h-6 w-6 fill-red-400 text-red-400" />
                      </div>
                      <p className="text-xs mt-2 text-primary-foreground/70 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Verified by Medical Center
+                        <CheckCircle2 className="w-3 h-3" /> Verified by BUTH
                      </p>
                   </CardContent>
                </Card>
@@ -81,7 +134,7 @@ export default function StudentDashboard() {
                      <CardTitle className="text-sm font-medium text-muted-foreground">Genotype</CardTitle>
                   </CardHeader>
                   <CardContent>
-                     <div className="text-4xl font-black text-foreground">AA</div>
+                     <div className="text-4xl font-black text-foreground">{user?.genotype || 'N/A'}</div>
                   </CardContent>
                </Card>
             </motion.div>
@@ -91,10 +144,10 @@ export default function StudentDashboard() {
                   <div className="absolute top-0 left-0 w-1 h-full bg-amber-500 transition-all duration-300 group-hover:w-2" />
                   <CardHeader className="pb-2 flex flex-row items-center justify-between">
                      <CardTitle className="text-sm font-medium text-muted-foreground">Allergies</CardTitle>
-                     <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">1 Logged</Badge>
+                     <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">{user?.allergies?.length || 0} Logged</Badge>
                   </CardHeader>
                   <CardContent>
-                     <div className="text-2xl font-bold text-foreground">Penicillin</div>
+                     <div className="text-2xl font-bold text-foreground">{user?.allergies?.[0] || 'None'}</div>
                   </CardContent>
                </Card>
             </motion.div>
@@ -104,10 +157,10 @@ export default function StudentDashboard() {
                   <div className="absolute top-0 left-0 w-1 h-full bg-accent transition-all duration-300 group-hover:w-2" />
                   <CardHeader className="pb-2 flex flex-row items-center justify-between">
                      <CardTitle className="text-sm font-medium text-muted-foreground">Active Conditions</CardTitle>
-                     <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">Monitoring</Badge>
+                     <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">{user?.conditions?.length ? 'Monitoring' : 'None'}</Badge>
                   </CardHeader>
                   <CardContent>
-                     <div className="text-2xl font-bold text-foreground">Mild Asthma</div>
+                     <div className="text-2xl font-bold text-foreground">{user?.conditions?.[0] || 'None'}</div>
                   </CardContent>
                </Card>
             </motion.div>
@@ -132,15 +185,15 @@ export default function StudentDashboard() {
                            <h3 className="text-xl font-black tracking-tight">Active Proximity Tracking</h3>
                            <Badge className="bg-primary/20 text-primary border-none text-[10px] font-bold">LIVE</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground font-medium">Nearest Healthcare Hub: <span className="text-foreground font-bold underline decoration-primary/30">Bethel Hall Sector B</span> &bull; <span className="text-primary font-bold">240m away</span></p>
+                        <p className="text-sm text-muted-foreground font-medium">Nearest Healthcare Hub: <span className="text-foreground font-bold underline decoration-primary/30">{studentHallName}</span> &bull; <span className="text-primary font-bold">120m away</span></p>
                      </div>
                   </div>
                   
-                  <div className="flex gap-3 w-full md:w-auto">
-                     <Button variant="outline" className="flex-1 md:flex-none h-11 rounded-xl bg-background/50 border-border/50 font-bold gap-2 text-xs">
+                  <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                     <Button variant="outline" className="w-full sm:w-auto h-11 rounded-xl bg-background/50 border-border/50 font-bold gap-2 text-[10px] md:text-xs">
                         <Navigation className="w-4 h-4" /> View Route
                      </Button>
-                     <Button className="flex-1 md:flex-none h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold gap-2 shadow-lg shadow-primary/20 text-xs px-6">
+                     <Button className="w-full sm:w-auto h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold gap-2 shadow-lg shadow-primary/20 text-[10px] md:text-xs px-6">
                         Contact Hall Responder
                      </Button>
                   </div>
@@ -163,39 +216,36 @@ export default function StudentDashboard() {
                      </div>
                   </CardHeader>
                   <CardContent className="p-0 flex-1">
-                     <div className="divide-y divide-border/50">
-                        {/* Completed Medication */}
-                        <motion.div whileHover={{ backgroundColor: "var(--color-muted)", opacity: 0.8 }} className="flex items-center justify-between p-5 bg-green-500/5 transition-colors cursor-pointer">
-                           <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 bg-green-100 dark:bg-green-500/20 text-green-600 rounded-2xl flex items-center justify-center shadow-sm">
-                                 <CheckCircle2 strokeWidth={2.5} className="h-6 w-6" />
-                              </div>
-                              <div>
-                                 <p className="font-semibold text-foreground">Salbutamol Inhaler</p>
-                                 <p className="text-xs font-medium text-muted-foreground mt-0.5 flex items-center gap-1">
-                                    <Clock className="h-3 w-3" /> 08:00 AM &middot; <span className="text-green-600">Taken</span>
-                                 </p>
-                              </div>
-                           </div>
-                           <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400">Done</Badge>
-                        </motion.div>
-
-                        {/* Pending Medication */}
-                        <motion.div whileHover={{ backgroundColor: "var(--color-muted)" }} className="flex items-center justify-between p-5 transition-colors cursor-pointer">
-                           <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center border border-accent/20">
-                                 <Pill className="h-6 w-6" />
-                              </div>
-                              <div>
-                                 <p className="font-semibold text-foreground">Multivitamins</p>
-                                 <p className="text-xs font-medium text-muted-foreground mt-0.5 flex items-center gap-1">
-                                    <Clock className="h-3 w-3" /> 08:00 PM &middot; <span className="text-accent">Upcoming</span>
-                                 </p>
-                              </div>
-                           </div>
-                           <Button size="sm" className="rounded-full bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/20">Mark Taken</Button>
-                        </motion.div>
-                     </div>
+                     {medsLoading ? (
+                        <div className="flex items-center justify-center p-20">
+                           <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        </div>
+                     ) : meds.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center p-12 text-center opacity-60">
+                           <CheckCircle2 className="w-12 h-12 text-green-500 mb-4" />
+                           <p className="font-bold text-sm">All set! No pending medications.</p>
+                        </div>
+                     ) : (
+                        <div className="divide-y divide-border/50">
+                           {meds.map((med) => (
+                              <motion.div key={med.id} whileHover={{ backgroundColor: "var(--color-muted)" }} className="flex items-center justify-between p-5 transition-colors cursor-pointer">
+                                 <div className="flex items-center gap-4">
+                                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border ${med.last_taken ? 'bg-green-100 text-green-600 border-green-200' : 'bg-accent/10 text-accent border-accent/20'}`}>
+                                       {med.last_taken ? <CheckCircle2 className="h-6 w-6" /> : <Pill className="h-6 w-6" />}
+                                    </div>
+                                    <div>
+                                       <p className="font-semibold text-foreground">{med.name}</p>
+                                       <p className="text-xs font-medium text-muted-foreground mt-0.5 flex items-center gap-1">
+                                          <Clock className="h-3 w-3" /> {med.schedule_time} &middot; <span className={med.last_taken ? 'text-green-600' : 'text-accent'}>{med.last_taken ? 'Taken' : 'Upcoming'}</span>
+                                       </p>
+                                    </div>
+                                 </div>
+                                 {!med.last_taken && <Button size="sm" onClick={() => markTaken(med.id)} className="rounded-full bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/20">Mark Taken</Button>}
+                                 {med.last_taken && <Badge className="bg-green-100 text-green-700">Done</Badge>}
+                              </motion.div>
+                           ))}
+                        </div>
+                     )}
                   </CardContent>
                </Card>
             </motion.div>
@@ -208,7 +258,7 @@ export default function StudentDashboard() {
                   <Card className="border-border/50 shadow-xl shadow-black/5 bg-background/80 backdrop-blur-lg">
                      <CardHeader className="border-b bg-muted/40 pb-4">
                         <CardTitle className="flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-primary" /> Upcoming Appointments</CardTitle>
-                        <CardDescription>Babcock General Hospital</CardDescription>
+                        <CardDescription>BUTH (Babcock University Teaching Hospital)</CardDescription>
                      </CardHeader>
                      <CardContent className="pt-6">
                         <motion.div whileHover={{ scale: 1.02 }} className="rounded-2xl border border-border/50 p-5 bg-background shadow-md relative overflow-hidden group cursor-pointer transition-all">
@@ -220,7 +270,7 @@ export default function StudentDashboard() {
                               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">Confirmed</Badge>
                            </div>
                            <p className="font-semibold text-lg mb-1 leading-none">Dr. Adeyekun</p>
-                           <p className="text-sm text-muted-foreground mb-4">Pulmonology Dept.</p>
+                           <p className="text-sm text-muted-foreground mb-4">Medicine Dept.</p>
                            <div className="flex items-center gap-3 text-xs font-medium">
                               <span className="flex items-center gap-1.5 bg-muted/60 px-3 py-1.5 rounded-lg border border-white/10"><CalendarIcon className="h-3.5 w-3.5 text-primary" /> Thu, Apr 12</span>
                               <span className="flex items-center gap-1.5 bg-muted/60 px-3 py-1.5 rounded-lg border border-white/10"><Clock className="h-3.5 w-3.5 text-primary" /> 10:30 AM</span>

@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar"
+import { MobileNav } from "@/components/mobile-nav"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 
 export default function ProtectedLayout({
@@ -9,7 +10,8 @@ export default function ProtectedLayout({
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="pb-24 md:pb-0">
+        <MobileNav />
         {children}
       </SidebarInset>
     </SidebarProvider>

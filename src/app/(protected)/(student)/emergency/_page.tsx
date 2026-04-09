@@ -109,7 +109,7 @@ export default function EmergencyPage() {
               <div className="space-y-2">
                 <Label>Location Fallback (Hall & Room)</Label>
                 <div className="flex gap-2">
-                  <Select value={selectedHall} onValueChange={setSelectedHall}>
+                  <Select value={selectedHall} onValueChange={(value) => setSelectedHall(value || "")}>
                     <SelectTrigger className="w-[60%]">
                       <SelectValue placeholder="Select Hall" />
                     </SelectTrigger>

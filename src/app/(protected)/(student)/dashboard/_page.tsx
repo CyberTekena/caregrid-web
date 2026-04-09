@@ -15,7 +15,7 @@ export default function StudentDashboard() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome back, Michael</h1>
           <p className="text-muted-foreground mt-1">Matric: 19/0045 &nbsp;|&nbsp; Welch Hall, Rm 212</p>
         </div>
-        <Button asChild className="bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/20 shadow-[0_0_15px_rgba(220,38,38,0.4)] animate-pulse rounded-full h-12 px-6">
+        <Button className="bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/20 shadow-[0_0_15px_rgba(220,38,38,0.4)] animate-pulse rounded-full h-12 px-6">
           <Link href="/student/emergency">
             <HeartPulse className="mr-2 h-5 w-5" />
             SOS
@@ -122,7 +122,7 @@ export default function StudentDashboard() {
                  <span className="font-semibold text-primary text-sm">Routine Checkup</span>
                  <Badge variant="outline">Confirmed</Badge>
                </div>
-               <p className="text-sm font-medium mb-1">Dr. Adeyekun (Pulmonology)</p>
+               <p className="text-sm font-medium mb-1">Dr. Adeyekun (Medicine)</p>
                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-3">
                  <span className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md"><CalendarIcon className="h-3 w-3" /> Thu, Apr 12</span>
                  <span className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md"><Clock className="h-3 w-3" /> 10:30 AM</span>

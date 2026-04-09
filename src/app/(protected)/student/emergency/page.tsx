@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
 import {
   MapPin,
@@ -9,6 +9,7 @@ import {
   ShieldAlert,
   Bell,
   ChevronRight,
+  Activity,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -17,20 +18,71 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { MapModule } from "@/components/map-wrapper"
-import { HALLS, HALL_BY_ID, BABCOCK_HOSPITAL } from "@/data/halls"
-import { appStore } from "@/store/app-store"
-
-// Hardcoded to Welch Hall student — replace with auth context when login is added
-const STUDENT = { name: "Michael Doe", hallId: "welch", hallName: "Welch Hall", room: "RM 212" }
+import { useCurrentUser } from "@/hooks/use-current-user"
+import { useHalls } from "@/hooks/use-halls"
+import { BABCOCK_HOSPITAL } from "@/data/halls"
+import { incidentService } from "@/lib/services/incident-service"
 
 export default function StudentEmergency() {
+  const { user } = useCurrentUser()
+  const { halls, loading: hallsLoading } = useHalls()
   const [isEmergencyActive, setIsEmergencyActive] = useState(false)
+  const [reportForOther, setReportForOther] = useState(false)
+  const [otherName, setOtherName] = useState("")
   const [notifyFamily, setNotifyFamily] = useState(true)
+  const [loading, setLoading] = useState(false)
   const emergencyTypeRef = useRef("asthma")
   const descriptionRef = useRef("")
+  const [responderPos, setResponderPos] = useState<[number, number] | undefined>(undefined)
+
+  const studentHall = halls.find(h => h.id === user?.hall_id)
+  const studentLocation: [number, number] | null = studentHall ? [studentHall.lat, studentHall.lng] : null
+
+  // Simulate responder movement for demo impact
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (isEmergencyActive && studentLocation) {
+      // Start near hospital
+      const hospitalPos: [number, number] = [BABCOCK_HOSPITAL.lat, BABCOCK_HOSPITAL.lng]
+      setResponderPos([hospitalPos[0], hospitalPos[1]])
+      
+      let step = 0
+      interval = setInterval(() => {
+        step += 1
+        if (step > 20) {
+           clearInterval(interval)
+           return
+        }
+        // Linear interpolation towards student's hall
+        const lat = hospitalPos[0] + (studentLocation[0] - hospitalPos[0]) * (step / 20)
+        const lng = hospitalPos[1] + (studentLocation[1] - hospitalPos[1]) * (step / 20)
+        setResponderPos([lat, lng])
+      }, 2000)
+    } else {
+      setResponderPos(undefined)
+    }
+    return () => clearInterval(interval)
+  }, [isEmergencyActive, studentLocation?.[0], studentLocation?.[1]])
+
+  // Show loading state while data is being fetched
+  if (hallsLoading || !user) {
+    return (
+      <div className="flex-1 p-3 md:p-8 max-w-[1200px] mx-auto w-full relative z-10 font-sans">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center space-y-4">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-muted-foreground">Loading emergency services...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const hospitalPos: [number, number] = [BABCOCK_HOSPITAL.lat, BABCOCK_HOSPITAL.lng]
 
   const emergencyLabels: Record<string, string> = {
     asthma: "Asthma Attack",
@@ -39,44 +91,61 @@ export default function StudentEmergency() {
     other: "Other Medical Crisis",
   }
 
-  const handleSOS = () => {
-    setIsEmergencyActive(true)
+  const handleSOS = async () => {
+    if (!user) {
+      toast.error("Authentication Error", { description: "Please log in to trigger emergency alerts." })
+      return
+    }
 
-    // Push a live request into the shared store → cubicle staff sees it instantly
-    appStore.addRequest({
-      studentName: STUDENT.name,
-      hallId: STUDENT.hallId,
-      hallName: STUDENT.hallName,
-      room: STUDENT.room,
-      type: emergencyLabels[emergencyTypeRef.current] ?? "Emergency",
-      description: descriptionRef.current || "No description provided.",
-      essScore: emergencyTypeRef.current === "asthma" ? 9.2 : 6.0,
-    })
+    setLoading(true)
+    try {
+      // Create persistent incident in Supabase
+      await incidentService.create({
+        student_id: user.id,
+        student_name: reportForOther ? (otherName || "Unknown Student") : user.full_name || "Unknown Student",
+        hall_id: user.hall_id || "",
+        room_number: user.room_number || "",
+        type: emergencyLabels[emergencyTypeRef.current] ?? "Emergency",
+        description: `${reportForOther ? `[3rd Party Report by ${user.full_name || "Unknown Reporter"}] ` : ""}${descriptionRef.current || "No description provided."}`,
+        ess_score: emergencyTypeRef.current === "asthma" ? 9.2 : 6.0,
+        is_third_party: reportForOther,
+        third_party_name: reportForOther ? user.full_name || null : null,
+        status: 'pending'
+      })
 
-    toast.success("Emergency SOS Triggered!", {
-      description: "Responders at Welch Hall cubicle have been alerted.",
-      duration: 10000,
-    })
+      setIsEmergencyActive(true)
+      toast.success("Emergency SOS Triggered!", {
+        description: reportForOther 
+          ? `SOS sent for ${otherName || "Unknown student"}. Dispatching to your location.`
+          : `Responders at ${studentHall?.name || "your hall"} have been alerted.`,
+        duration: 10000,
+      })
 
-    if (notifyFamily) {
-      setTimeout(() => {
-        toast.info("Family Notified", {
-          description: "An SMS alert has been sent to your primary contact (Sarah Doe).",
-        })
-      }, 2000)
+      if (notifyFamily && !reportForOther) {
+        setTimeout(() => {
+          toast.info("Family Notified", {
+            description: "An SMS alert has been sent to your primary contact.",
+          })
+        }, 2000)
+      }
+    } catch (error) {
+      console.error("SOS Failure:", error)
+      toast.error("SOS Failed", { description: "Check your internet connection and try again." })
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="flex-1 p-4 md:p-8 space-y-8 max-w-[1200px] mx-auto w-full relative z-10 font-sans">
+    <div className="flex-1 p-3 md:p-8 space-y-6 md:space-y-8 max-w-[1200px] mx-auto w-full relative z-10 font-sans">
       
       {/* Page Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
          <div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-2">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground flex items-center gap-2">
                Emergency SOS
             </h1>
-            <p className="text-muted-foreground mt-1">Get immediate medical assistance in Welch Hall.</p>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">Get immediate medical assistance from the nearest BUTH cubicle.</p>
          </div>
          {isEmergencyActive && (
             <Badge variant="destructive" className="animate-pulse h-10 px-6 rounded-full text-xs font-black uppercase tracking-widest border-2 border-white/20">
@@ -95,14 +164,40 @@ export default function StudentEmergency() {
              <CardHeader className="pb-4">
                <CardTitle className="text-xl font-bold mb-2">Initialize Emergency Alert</CardTitle>
                <CardDescription>
-                 Describe your symptoms if possible. Responders will see your medical history immediately.
+                 Describe the situation. Responders will be dispatched to your current location immediately.
                </CardDescription>
              </CardHeader>
 
              <CardContent className="space-y-6">
+                {/* Report for Others Toggle */}
+                <div className="p-4 rounded-2xl bg-muted/30 border border-border/50 space-y-3">
+                   <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                         <h4 className="font-bold text-sm tracking-tight">Reporting for someone else?</h4>
+                         <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Help another student in need</p>
+                      </div>
+                      <Switch 
+                         disabled={isEmergencyActive}
+                         checked={reportForOther} 
+                         onCheckedChange={setReportForOther} 
+                      />
+                   </div>
+                   {reportForOther && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="pt-2">
+                         <Label className="text-[10px] font-black uppercase tracking-widest mb-2 block">Student Name (if known)</Label>
+                         <Input 
+                            placeholder="Enter name or leave empty if unknown" 
+                            className="bg-background/50 rounded-xl"
+                            value={otherName}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOtherName(e.target.value)}
+                         />
+                      </motion.div>
+                   )}
+                </div>
+
                 <div className="space-y-2">
                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Emergency Type</Label>
-                   <Select disabled={isEmergencyActive} defaultValue="asthma" onValueChange={(v: string) => { emergencyTypeRef.current = v }}>
+                   <Select disabled={isEmergencyActive} defaultValue="asthma" onValueChange={(v: string | null) => { if (v) emergencyTypeRef.current = v }}>
                       <SelectTrigger className="h-12 bg-muted/30 border-border/50 rounded-xl">
                          <SelectValue placeholder="Select emergency type" />
                       </SelectTrigger>
@@ -116,38 +211,38 @@ export default function StudentEmergency() {
                 </div>
 
                 <div className="space-y-2">
-                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Brief Description</Label>
+                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Situation Description</Label>
                    <Textarea
                       disabled={isEmergencyActive}
-                      placeholder="e.g., Struggling to breathe, inhaler not responding..."
+                      placeholder={reportForOther ? "Describe what is happening to the other student..." : "e.g., Struggling to breathe, inhaler not responding..."}
                       className="min-h-[100px] bg-muted/30 border-border/50 rounded-xl resize-none"
-                      onChange={e => { descriptionRef.current = e.target.value }}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => { descriptionRef.current = e.target.value }}
                    />
                 </div>
 
-                {/* Advanced Feature: Contact Notification */}
-                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-3">
-                   <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                         <h4 className="font-bold text-sm flex items-center gap-2 tracking-tight">
-                            <Bell className="w-4 h-4 text-primary" /> Notify Primary Contacts
-                         </h4>
-                         <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Automatic family SMS alert</p>
+                {!reportForOther && (
+                   <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-3">
+                      <div className="flex items-center justify-between">
+                         <div className="space-y-0.5">
+                            <h4 className="font-bold text-sm flex items-center gap-2 tracking-tight">
+                               <Bell className="w-4 h-4 text-primary" /> Notify Primary Contacts
+                            </h4>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Automatic family SMS alert</p>
+                         </div>
+                         <Switch 
+                            disabled={isEmergencyActive}
+                            checked={notifyFamily} 
+                            onCheckedChange={setNotifyFamily} 
+                         />
                       </div>
-                      <Switch 
-                         disabled={isEmergencyActive}
-                         checked={notifyFamily} 
-                         onCheckedChange={setNotifyFamily} 
-                         id="notify-family"
-                      />
+                      {notifyFamily && (
+                         <div className="bg-background/80 px-3 py-2 rounded-lg border border-border/50 flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-70">Contact: Sarah Doe (Mother)</span>
+                            <Badge variant="outline" className="text-[8px] h-4 border-primary/20 text-primary">Priority 1</Badge>
+                         </div>
+                      )}
                    </div>
-                   {notifyFamily && (
-                      <div className="bg-background/80 px-3 py-2 rounded-lg border border-border/50 flex items-center justify-between">
-                         <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-70">Contact: Sarah Doe (Mother)</span>
-                         <Badge variant="outline" className="text-[8px] h-4 border-primary/20 text-primary">Priority 1</Badge>
-                      </div>
-                   )}
-                </div>
+                )}
 
                 {!isEmergencyActive ? (
                    <motion.div whileTap={{ scale: 0.95 }}>
@@ -194,17 +289,17 @@ export default function StudentEmergency() {
 
         {/* Right Column: Spatial Monitor & Guide */}
         <div className="lg:col-span-3 space-y-6">
-           <Card className="border-border/50 bg-background/60 backdrop-blur-xl shadow-2xl h-[450px] overflow-hidden relative group">
+           <Card className="border-border/50 bg-background/60 backdrop-blur-xl shadow-2xl h-[300px] md:h-[450px] overflow-hidden relative group">
               <MapModule
-                 halls={HALLS}
-                 userLocation={[HALL_BY_ID["welch"].lat, HALL_BY_ID["welch"].lng]}
+                 halls={halls}
+                 userLocation={studentLocation || undefined}
                  hospital={BABCOCK_HOSPITAL}
                  className="h-full w-full rounded-none"
               />
 
               <div className="absolute top-6 left-6 z-10">
                  <Badge className="bg-background/80 backdrop-blur-md border-border text-foreground font-black py-2 px-4 shadow-xl">
-                    Welch Hall — Your Location
+                    Your Current Location
                  </Badge>
               </div>
 
@@ -215,15 +310,15 @@ export default function StudentEmergency() {
               )}
            </Card>
 
-           <div className="grid grid-cols-2 gap-4">
-              <Card className="border-border/50 bg-primary/5 shadow-lg border-dashed">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="border-border/50 bg-destructive/5 shadow-lg border-dashed">
                  <CardContent className="p-5 flex gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                       <MapPin className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center text-destructive shrink-0">
+                       <Navigation className="w-5 h-5" />
                     </div>
                     <div className="space-y-1">
-                       <h4 className="font-bold text-sm">Stationary Mode</h4>
-                       <p className="text-[10px] text-muted-foreground leading-relaxed uppercase tracking-widest font-bold">Stay in your room</p>
+                       <h4 className="font-bold text-sm">Priority Dispatch</h4>
+                       <p className="text-[10px] text-destructive/70 leading-relaxed uppercase tracking-widest font-bold">Responders coming to you</p>
                     </div>
                  </CardContent>
               </Card>
@@ -233,8 +328,8 @@ export default function StudentEmergency() {
                        <ShieldAlert className="w-5 h-5" />
                     </div>
                     <div className="space-y-1">
-                       <h4 className="font-bold text-sm">Vital Priority</h4>
-                       <p className="text-[10px] text-muted-foreground leading-relaxed uppercase tracking-widest font-bold">History shared</p>
+                       <h4 className="font-bold text-sm">Institutional Security</h4>
+                       <p className="text-[10px] text-muted-foreground leading-relaxed uppercase tracking-widest font-bold">History shared with BUTH</p>
                     </div>
                  </CardContent>
               </Card>
