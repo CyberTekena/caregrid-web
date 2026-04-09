@@ -155,29 +155,46 @@ function FlyToLocation({ center, zoom }: { center: [number, number]; zoom: numbe
   return null
 }
 
-function FitBoundsControl({ halls }: { halls: HallCubicle[] }) {
+function FitBoundsControl({ halls, userLocation }: { halls: HallCubicle[]; userLocation?: [number, number] }) {
   const map = useMap()
-  const fit = () => {
+  
+  const fitHalls = () => {
     if (!halls.length) return
     const bounds = L.latLngBounds(halls.map((h) => [h.lat, h.lng]))
-    map.fitBounds(bounds.pad(0.08))
+    map.fitBounds(bounds.pad(0.1), { duration: 1 })
   }
+
+  const centerOnMe = () => {
+    if (!userLocation) return
+    map.flyTo(userLocation, 20, { duration: 1 })
+  }
+
   return (
-    <div className="leaflet-bottom leaflet-left" style={{ zIndex: 1000, marginBottom: "24px", marginLeft: "10px" }}>
-      <div className="leaflet-control leaflet-bar">
-        <a
-          href="#"
-          role="button"
-          title="Fit all halls"
-          onClick={(e) => { e.preventDefault(); fit() }}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: "34px", height: "34px", fontSize: "16px", fontWeight: "bold",
-            textDecoration: "none", color: "#333"
-          }}
+    <div className="leaflet-top leaflet-right" style={{ zIndex: 1000, marginTop: "80px", marginRight: "12px" }}>
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={(e) => { e.preventDefault(); centerOnMe() }}
+          disabled={!userLocation}
+          className="w-10 h-10 bg-background/90 backdrop-blur-md border border-border/50 rounded-xl shadow-xl flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+          title="Center on my location"
         >
-          ⊞
-        </a>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+        </button>
+        <button
+          onClick={(e) => { e.preventDefault(); fitHalls() }}
+          className="w-10 h-10 bg-background/90 backdrop-blur-md border border-border/50 rounded-xl shadow-xl flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all group"
+          title="Fit all halls"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 3h6v6"></path>
+            <path d="M9 21H3v-6"></path>
+            <path d="M21 3l-7 7"></path>
+            <path d="M3 21l7-7"></path>
+          </svg>
+        </button>
       </div>
     </div>
   )
@@ -302,7 +319,7 @@ export default function MapModule({
         <MapInit />
         {userLocation && <FlyToLocation center={userLocation} zoom={18} />}
 
-        <FitBoundsControl halls={halls} />
+        <FitBoundsControl halls={halls} userLocation={userLocation} />
 
         {/* Hall cubicle markers — house icons coloured by status */}
         {halls?.map((hall) => (

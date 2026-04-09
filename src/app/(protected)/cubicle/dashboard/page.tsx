@@ -16,6 +16,7 @@ import { useHalls } from "@/hooks/use-halls"
 import { useAllUsers } from "@/hooks/use-all-users"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { BABCOCK_HOSPITAL } from "@/data/halls"
+import { LoadingScreen } from "@/components/loading-screen"
 
 function RequestTimer({ since }: { since: string }) {
   const [elapsed, setElapsed] = useState(() => Math.floor((Date.now() - new Date(since).getTime()) / 1000))
@@ -222,14 +223,11 @@ export default function CubicleDashboard() {
 
   // Show loading state while data is loading
   if (userLoading || hallsLoading || incidentsLoading) {
-    return (
-      <div className="flex-1 p-3 md:p-8 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen message="Syncing Live Incident Network..." />
+  }
+
+  if (!user) {
+    return <LoadingScreen message="Authenticating Staff Portal..." />
   }
 
   // Show error state if halls failed to load

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { useIncidents } from "@/hooks/use-incidents"
 import { useHalls } from "@/hooks/use-halls"
 import { useStudentCount } from "@/hooks/use-student-count"
+import { LoadingScreen } from "@/components/loading-screen"
 
 export default function AdminDashboard() {
   const { incidents, loading: incidentsLoading } = useIncidents() // Get all incidents across halls
@@ -47,6 +48,10 @@ export default function AdminDashboard() {
   }, [incidents, studentCount])
 
   const loading = incidentsLoading || hallsLoading || countLoading
+
+  if (loading) {
+    return <LoadingScreen message="Aggregating Campus Health Data..." />
+  }
 
   const container = {
     hidden: { opacity: 0 },

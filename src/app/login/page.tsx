@@ -78,6 +78,14 @@ export default function LoginPage() {
 
     setIsLoading(true)
     try {
+      if (!formData.email.endsWith(".babcock.edu.ng")) {
+        toast.error("Invalid email domain", {
+          description: "Please use your official Babcock University email."
+        })
+        setIsLoading(false)
+        return
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password
@@ -150,6 +158,14 @@ export default function LoginPage() {
 
     setIsLoading(true)
     try {
+      if (!formData.email.endsWith(".babcock.edu.ng")) {
+        toast.error("Invalid email domain", {
+          description: "Registration is restricted to official Babcock University emails."
+        })
+        setIsLoading(false)
+        return
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,

@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { MapModule } from "@/components/map-wrapper"
+import { LoadingScreen } from "@/components/loading-screen"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { useHalls } from "@/hooks/use-halls"
 import { BABCOCK_HOSPITAL } from "@/data/halls"
@@ -38,9 +39,24 @@ export default function StudentEmergency() {
   const emergencyTypeRef = useRef("asthma")
   const descriptionRef = useRef("")
   const [responderPos, setResponderPos] = useState<[number, number] | undefined>(undefined)
+  const [browserLocation, setBrowserLocation] = useState<[number, number] | null>(null)
+
+  // Request browser geolocation on mount
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setBrowserLocation([position.coords.latitude, position.coords.longitude])
+        },
+        (error) => {
+          console.warn("Geolocation error:", error.message)
+        }
+      )
+    }
+  }, [])
 
   const studentHall = halls.find(h => h.id === user?.hall_id)
-  const studentLocation: [number, number] | null = studentHall ? [studentHall.lat, studentHall.lng] : null
+  const studentLocation: [number, number] | null = browserLocation || (studentHall ? [studentHall.lat, studentHall.lng] : null)
 
   // Simulate responder movement for demo impact
   useEffect(() => {
@@ -70,16 +86,7 @@ export default function StudentEmergency() {
 
   // Show loading state while data is being fetched
   if (hallsLoading || !user) {
-    return (
-      <div className="flex-1 p-3 md:p-8 max-w-[1200px] mx-auto w-full relative z-10 font-sans">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center space-y-4">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p className="text-muted-foreground">Loading emergency services...</p>
-          </div>
-        </div>
-      </div>
-    )
+    return <LoadingScreen message="Loading Emergency Services..." />
   }
 
   const hospitalPos: [number, number] = [BABCOCK_HOSPITAL.lat, BABCOCK_HOSPITAL.lng]
@@ -248,40 +255,43 @@ export default function StudentEmergency() {
                    <motion.div whileTap={{ scale: 0.95 }}>
                       <Button 
                         onClick={handleSOS}
-                        className="w-full h-16 bg-destructive hover:bg-destructive/90 text-white font-black text-lg rounded-2xl shadow-xl shadow-destructive/20 border-t border-white/20 gap-3 group"
+                        disabled={loading}
+                        className="w-full h-20 rounded-2xl bg-destructive hover:bg-destructive/90 text-white font-black text-xl shadow-[0_0_40px_rgba(239,68,68,0.3)] border-4 border-white/20 transition-all group"
                       >
-                        <ShieldAlert className="w-6 h-6 animate-bounce" />
-                        TRIGGER SOS DISPATCH
-                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                         {loading ? (
+                            <div className="flex items-center gap-3">
+                               <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                               <span>SIGNALING...</span>
+                            </div>
+                         ) : (
+                            <div className="flex flex-col items-center">
+                               <span className="flex items-center gap-3">
+                                  <ShieldAlert className="w-8 h-8 group-hover:scale-110 transition-transform" /> 
+                                  TRIGGER SOS
+                               </span>
+                               <span className="text-[10px] opacity-60 font-medium tracking-[0.3em] mt-1">TAP TO SEND ALERT</span>
+                            </div>
+                         )}
                       </Button>
                    </motion.div>
                 ) : (
-                   <div className="space-y-4">
-                      <div className="bg-destructive/10 border border-destructive/20 p-5 rounded-2xl">
-                         <div className="flex items-center gap-4 mb-3">
-                            <div className="w-10 h-10 bg-destructive rounded-xl flex items-center justify-center text-white shadow-lg">
-                               <Navigation className="w-5 h-5 animate-pulse" />
-                            </div>
-                            <div>
-                               <h4 className="font-bold text-sm">Responder En-Route</h4>
-                               <p className="text-xs text-muted-foreground">Nurse Adeola &bull; 2m away</p>
-                            </div>
+                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+                      <div className="p-6 rounded-3xl bg-destructive/10 border-2 border-destructive/20 text-center space-y-2">
+                         <div className="w-12 h-12 bg-destructive rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg shadow-destructive/20 animate-pulse">
+                            <Activity className="w-6 h-6 text-white" />
                          </div>
-                         <div className="w-full bg-destructive/10 h-1.5 rounded-full overflow-hidden">
-                            <motion.div 
-                               initial={{ width: "0%" }}
-                               animate={{ width: "65%" }}
-                               className="bg-destructive h-full"
-                            />
-                         </div>
+                         <h3 className="text-xl font-black text-destructive uppercase tracking-tighter">Help is Coming</h3>
+                         <p className="text-sm text-muted-foreground font-medium">Responders are on their way to your location. Stay calm and follow instructions.</p>
                       </div>
-                      <Button variant="outline" className="w-full h-12 rounded-xl font-bold gap-2">
-                        <Phone className="w-4 h-4" /> Call Responder
+                      
+                      <Button 
+                        variant="outline"
+                        onClick={() => setIsEmergencyActive(false)}
+                        className="w-full h-12 rounded-xl border-destructive/20 text-destructive hover:bg-destructive/5 font-bold"
+                      >
+                         Cancel Emergency (Demo Reset)
                       </Button>
-                      <Button variant="ghost" onClick={() => setIsEmergencyActive(false)} className="w-full text-xs text-muted-foreground hover:text-destructive">
-                        Cancel SOS (Accidental Trigger)
-                      </Button>
-                   </div>
+                   </motion.div>
                 )}
              </CardContent>
           </Card>

@@ -16,7 +16,7 @@ export const BABCOCK_HOSPITAL: { name: string; lat: number; lng: number } = {
 export const BABCOCK_CENTER: [number, number] = [6.8937, 3.7247]
 
 export const HALLS: HallCubicle[] = [
-  // ── Premium Male ─────────────────────────────────────────────
+  // ── Male Halls ─────────────────────────────────────────────
   {
     id: "welch",
     name: "Welch Hall",
@@ -36,15 +36,6 @@ export const HALLS: HallCubicle[] = [
     name: "Nelson Mandela Hall",
     lat: 6.8934727,
     lng: 3.7230408,
-    status: "active",
-  },
-
-  // ── Classic Male ─────────────────────────────────────────────
-  {
-    id: "winslow",
-    name: "Winslow Hall",
-    lat: 6.8940085,
-    lng: 3.7216602,
     status: "active",
   },
   {
@@ -69,14 +60,28 @@ export const HALLS: HallCubicle[] = [
     status: "active",
   },
   {
-    id: "gamaliel",
-    name: "Gamaliel Hall",
-    lat: 6.8952,
-    lng: 3.7221,
+    id: "adeleke",
+    name: "Adeleke Hall",
+    lat: 6.8932,
+    lng: 3.7215,
+    status: "active",
+  },
+  {
+    id: "emerald",
+    name: "Emerald Hall",
+    lat: 6.8919,
+    lng: 3.7212,
+    status: "active",
+  },
+  {
+    id: "topaz",
+    name: "Topaz Hall",
+    lat: 6.8936,
+    lng: 3.7228,
     status: "active",
   },
 
-  // ── Premium Female ───────────────────────────────────────────
+  // ── Female Halls ───────────────────────────────────────────
   {
     id: "havilah-gold",
     name: "Havilah Gold Hall",
@@ -91,8 +96,6 @@ export const HALLS: HallCubicle[] = [
     lng: 3.7277415,
     status: "active",
   },
-
-  // ── Classic Female ───────────────────────────────────────────
   {
     id: "ameyo-adadevoh",
     name: "Ameyo Adadevoh Hall",
@@ -114,15 +117,6 @@ export const HALLS: HallCubicle[] = [
     lng: 3.7247012,
     status: "busy",
   },
-  {
-    id: "justice-deborah",
-    name: "Justice Deborah Hall",
-    lat: 6.8932,
-    lng: 3.7241,
-    status: "active",
-  },
-
-  // ── Regular Female ───────────────────────────────────────────
   {
     id: "white",
     name: "White Hall",
@@ -150,6 +144,20 @@ export const HALLS: HallCubicle[] = [
     lat: 6.8924519,
     lng: 3.7274199,
     status: "inactive",
+  },
+  {
+    id: "diamond",
+    name: "Diamond Hall",
+    lat: 6.8927,
+    lng: 3.7275,
+    status: "active",
+  },
+  {
+    id: "sapphire",
+    name: "Sapphire Hall",
+    lat: 6.8929,
+    lng: 3.7272,
+    status: "active",
   },
 ]
 

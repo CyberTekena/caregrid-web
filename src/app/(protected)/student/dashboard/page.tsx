@@ -10,6 +10,7 @@ import Link from "next/link"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { useHalls } from "@/hooks/use-halls"
 import { useMedications } from "@/hooks/use-medications"
+import { LoadingScreen } from "@/components/loading-screen"
 
 export default function StudentDashboard() {
    const { user, loading: userLoading } = useCurrentUser()
@@ -38,25 +39,11 @@ export default function StudentDashboard() {
    }
 
    if (userLoading || hallsLoading) {
-      return (
-         <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-            <div className="text-center space-y-4">
-               <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-               <p className="text-muted-foreground">Loading your dashboard...</p>
-            </div>
-         </div>
-      )
+      return <LoadingScreen message="Assembling your health dashboard..." />
    }
 
    if (!user) {
-      return (
-         <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-            <div className="text-center space-y-4">
-               <AlertCircle className="w-8 h-8 text-destructive mx-auto" />
-               <p className="text-muted-foreground">Unable to load user profile. Please try refreshing.</p>
-            </div>
-         </div>
-      )
+      return <LoadingScreen message="Verifying user credentials..." />
    }
 
    return (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { motion } from "framer-motion"
 import { MapPin, Navigation, Info, Building2, Search, Filter, X } from "lucide-react"
 
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { MapModule } from "@/components/map-wrapper"
+import { LoadingScreen } from "@/components/loading-screen"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { useHalls } from "@/hooks/use-halls"
 import { BABCOCK_HOSPITAL } from "@/data/halls"
@@ -57,6 +58,21 @@ export default function StudentMap() {
   const { halls, loading: hallsLoading } = useHalls()
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<HallCubicle | null>(null)
+  const [browserLocation, setBrowserLocation] = useState<[number, number] | null>(null)
+
+  // Request browser geolocation on mount
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setBrowserLocation([position.coords.latitude, position.coords.longitude])
+        },
+        (error) => {
+          console.warn("Geolocation error:", error.message)
+        }
+      )
+    }
+  }, [])
 
   // Get student's hall from their profile
   const studentHall = useMemo(() => {
@@ -64,11 +80,12 @@ export default function StudentMap() {
     return halls.find(h => h.id === user.hall_id)
   }, [user?.hall_id, halls])
 
-  // Student's location from their hall
+  // Student's location: Browser location first, then hall location fallback
   const studentLocation: [number, number] | null = useMemo(() => {
+    if (browserLocation) return browserLocation
     if (!studentHall) return null
     return [studentHall.lat, studentHall.lng]
-  }, [studentHall])
+  }, [browserLocation, studentHall])
 
   const sorted = useMemo(() => {
     if (!studentLocation || !halls.length) return []
@@ -97,36 +114,15 @@ export default function StudentMap() {
 
   // Show loading state while data is loading
   if (hallsLoading || userLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading campus map...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen message="Initializing Campus Map..." />
   }
 
   if (!user) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive font-bold">Unable to load your profile.</p>
-          <p className="text-muted-foreground">Please sign in again or refresh the page.</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen message="Authenticating Student Access..." />
   }
 
   if (!studentLocation) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-foreground font-bold">Assigned hall not found.</p>
-          <p className="text-muted-foreground">Contact support if your hall assignment is missing.</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen message="Locating Hall Assignment..." />
   }
 
   return (
