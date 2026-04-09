@@ -1,0 +1,320 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+CareGrid Babcock
+A Hall-Based Emergency Health Cubicle and Student Medical Support Web Application for Babcock University
+
+Institution: Babcock University, Ogun State, Nigeria
+Prepared for: Student Project / Product Development Team
+Version: 1.0
+Date: April 2026
+1. Product Overview
+CareGrid Babcock is a fully working, role-based, responsive web application designed specifically for Babcock University. The platform supports the university’s initiative to establish health cubicles in all student halls and digitally connect those cubicles to students, Babcock University General Hospital, and system administrators.
+The product’s core purpose is to enable fast emergency reporting, hall-based health response, ambulance escalation, digital incident logging, appointment scheduling, and student wellness support. The application must be buildable and deployable as a real working MVP with production-ready architecture.
+2. Problem Statement
+Student health support within university residences is often delayed by poor coordination, lack of rapid response systems, and largely analogue health record practices. In emergency situations, students may not know who to contact, responders may not receive location-specific alerts fast enough, and hospital escalation can be disorganized.
+Babcock University’s proposed hall health cubicles create an opportunity to decentralize first response. However, without a digital system to coordinate students, cubicle responders, ambulance requests, and hospital appointments, the cubicles would still face operational inefficiencies.
+3. Product Vision
+To build a smart, hall-centered campus health operations platform that allows students in Babcock University to receive faster medical attention, while enabling health cubicles and the general hospital to coordinate care effectively.
+4. Primary Goal
+When a student in any Babcock University hall experiences an emergency, they should be able to trigger an alert that is automatically logged and routed to the nearest two health cubicles based on location, enabling fast intervention and escalation when necessary.
+5. Product Objectives
+•	Digitize hall-based emergency reporting and response workflows.
+•	Provide each hall health cubicle with a real operational dashboard.
+•	Enable students to track medication, health interactions, and hospital appointments.
+•	Allow cubicle staff to escalate severe cases and request ambulance support.
+•	Create a progressive digital health record layer despite existing analogue limitations.
+•	Provide institutional analytics for health response performance and hall health trends.
+6. Target Users
+•	Students living in halls of residence
+•	Hall health cubicle responders / staff
+•	Babcock University General Hospital staff
+•	Institutional / system administrators
+7. User Roles and Permissions
+7.1 Student Role
+•	Register and authenticate securely
+•	Manage personal and health profile
+•	Trigger emergency alerts
+•	Submit non-emergency health complaints
+•	Chat with responding cubicle staff
+•	Track medications and reminders
+•	View health records generated through the system
+•	Schedule appointments with Babcock General Hospital
+•	Receive notifications and health announcements
+7.2 Hall Health Cubicle Staff Role
+•	Receive emergency and non-emergency student reports
+•	View student details, hall/room, and emergency location
+•	Accept and manage active cases
+•	Chat with students during incidents
+•	Request ambulance support
+•	Escalate cases to the general hospital
+•	Log treatment notes and first aid rendered
+•	View hall-specific incident history and response metrics
+7.3 General Hospital Staff Role
+•	Receive escalated emergencies and ambulance requests
+•	Manage appointment scheduling and outcomes
+•	Create/update digital treatment summaries
+•	View referred student cases from cubicles
+•	Send hospital notices and monitor campus health activity
+7.4 Super Admin Role
+•	Manage users and staff assignments
+•	Manage halls and cubicle records
+•	Configure cubicle geolocations and escalation rules
+•	Access all reports, analytics, and system settings
+•	Manage announcements and operational oversight
+8. Scope
+8.1 In Scope (MVP)
+•	Role-based authentication
+•	Student onboarding and health profile
+•	Emergency SOS workflow
+•	Nearest-two-cubicle routing logic
+•	Real-time notifications and chat
+•	Cubicle operations dashboard
+•	Ambulance request and escalation workflow
+•	Non-emergency reporting
+•	Medication tracker and reminders
+•	Health records generated inside the platform
+•	Hospital appointment booking and management
+•	Analytics dashboards for cubicle/hospital/admin roles
+8.2 Out of Scope (Initial MVP)
+•	Full replacement of Babcock’s historical paper medical records
+•	Advanced telemedicine/video consultation
+•	Automated SMS billing or telecom integrations
+•	Native iOS/Android app (web app first)
+•	Complex AI diagnosis engine
+9. Core Functional Requirements
+9.1 Authentication and Onboarding
+•	Users must be able to sign up and sign in securely based on role.
+•	Students must complete onboarding with hall, room, emergency contact, and health details.
+•	Cubicle, hospital, and admin users must be provisioned and assigned by admin.
+•	Role-based route protection must prevent unauthorized access.
+9.2 Student Profile and Health Summary
+•	The student profile must store full name, matric number, department, level, hall, room, contact information, emergency contact, blood group, genotype, allergies, recurring conditions, and current medications.
+•	Students must be able to edit selected profile and wellness details.
+•	A health summary card must display key medical and emergency information.
+9.3 Emergency SOS Module
+This is the most critical workflow in the product.
+•	Students must have a highly visible Emergency Help button on dashboard and mobile views.
+•	Emergency form must support categories such as fainting, severe pain, bleeding, breathing difficulty, seizure, poisoning, high fever, chest pain, mental distress, and other.
+•	The system must automatically capture timestamp, student identity, hall, room, and geolocation (if permitted).
+•	Each emergency must be stored immediately in the database.
+•	The system must calculate and notify the nearest two cubicles.
+•	Emergency case statuses must be trackable in real time.
+•	Students must be able to see live response progress.
+9.4 Nearest Cubicle Routing Logic
+•	Each cubicle must have stored coordinates and hall assignment.
+•	The system must calculate distances from student coordinates to all cubicles.
+•	The nearest two cubicles must be selected and notified.
+•	If geolocation is unavailable, hall and room-based fallback logic must be used.
+•	If the primary cubicle does not respond within a configurable timeout, the system should escalate or continue with backup response.
+9.5 Cubicle Response Dashboard
+•	Cubicle staff must see active emergencies, pending reports, recent cases, and hall activity.
+•	Emergency case detail must include student information, location, emergency category, notes, status timeline, and action buttons.
+•	Cubicle staff must be able to accept, mark en route, mark arrived, resolve, escalate, and request ambulance.
+9.6 In-App Chat
+•	Student-to-cubicle chat must support real-time text communication during active cases.
+•	Cubicle-to-hospital escalation notes/chat must support operational handoff.
+•	Messages must be linked to a specific case and stored with timestamps.
+9.7 Ambulance Request and Escalation
+•	Cubicle staff must be able to request ambulance support from the case screen.
+•	Ambulance requests must create hospital-visible records with urgency, location, and case context.
+•	Statuses must include requested, acknowledged, dispatched, arrived, and completed.
+9.8 Non-Emergency Health Reporting
+•	Students must be able to submit non-emergency complaints to their hall cubicle.
+•	Reports should include complaint category, description, urgency, and optional image.
+•	Cubicle staff should be able to respond, advise, or escalate as needed.
+9.9 Medication Tracker and Reminders
+•	Students must be able to add and manage medication schedules.
+•	The system must support dosage, frequency, start/end dates, and reminder timing.
+•	Medication entries may be student-entered or staff-generated through treatment notes.
+9.10 Health Records Module
+•	The system must maintain a progressive digital health record layer.
+•	Records should include emergency incidents, treatment notes, referrals, appointment summaries, medications, and follow-up notes.
+•	Students must be able to view their platform-generated records.
+•	Hospital and cubicle staff must be able to create/update records generated through the app.
+9.11 Appointment Booking with Babcock General Hospital
+•	Students must be able to request appointments with the general hospital.
+•	Appointment categories should include consultation, follow-up, fever/illness, injury review, women’s health, medication review, referral, and mental wellness.
+•	Hospital staff must be able to approve, reschedule, reject, and complete appointments.
+9.12 Notifications and Announcements
+•	The system must support in-app notifications for emergencies, case updates, chat messages, medication reminders, appointments, and announcements.
+•	Admins and hospital staff must be able to publish hall-specific or campus-wide health notices.
+10. Non-Functional Requirements
+•	Responsive design for mobile, tablet, and desktop use
+•	Fast emergency submission and dashboard load performance
+•	Secure authentication and role-based access control
+•	Reliable real-time updates for alerts and chat
+•	Accessible, readable interface suitable for urgent use
+•	Auditability of emergency events and status changes
+•	Scalable database design for future institutional adoption
+11. Technical Requirements
+Recommended implementation stack for a fully working build:
+•	Frontend: React + Tailwind CSS
+•	UI Components: shadcn/ui + Lucide icons
+•	Animations: Framer Motion
+•	Forms & Validation: React Hook Form + Zod
+•	Backend / Database / Auth / Realtime: Supabase
+•	Database: PostgreSQL (via Supabase)
+•	Maps: OpenStreetMap + Leaflet.js + Browser Geolocation API
+•	Charts/Analytics: Recharts
+12. Suggested Information Architecture / Pages
+12.1 Public Pages
+•	Landing Page
+•	About Page
+•	Login / Signup
+•	Contact / Support
+12.2 Student Pages
+•	Student Dashboard
+•	Emergency SOS
+•	Live Emergency Status
+•	Non-Emergency Report
+•	Health Records
+•	Medication Tracker
+•	Appointments
+•	Chat
+•	Notifications
+•	Profile / Settings
+12.3 Cubicle Pages
+•	Cubicle Dashboard
+•	Active Emergencies
+•	Case Detail
+•	Incident Logs
+•	Student Case History
+•	Chat Center
+•	Hall Analytics
+•	Cubicle Profile
+12.4 Hospital Pages
+•	Hospital Dashboard
+•	Escalated Cases
+•	Ambulance Requests
+•	Appointment Management
+•	Record Management
+•	Health Notices
+•	Hospital Analytics
+12.5 Admin Pages
+•	Admin Dashboard
+•	User Management
+•	Hall Management
+•	Cubicle Management
+•	Emergency Logs
+•	Analytics & Reporting
+•	Settings / Configuration
+13. Database Entities (Suggested)
+•	users
+•	student_profiles
+•	halls
+•	cubicles
+•	cubicle_staff
+•	hospital_staff
+•	emergencies
+•	emergency_assignments
+•	emergency_status_logs
+•	emergency_messages
+•	ambulance_requests
+•	non_emergency_reports
+•	appointments
+•	health_records
+•	treatment_notes
+•	medications
+•	medication_reminders
+•	notifications
+•	announcements
+•	audit_logs
+14. UX / UI Expectations
+•	Light-first, modern, trustworthy healthcare interface
+•	Prominent emergency CTA with clear urgency hierarchy
+•	Role-specific dashboards with polished card-based layouts
+•	Fast navigation and clean forms
+•	Interactive map views for emergency context
+•	Status badges, timelines, and notifications that feel operational
+15. Risks and Constraints
+•	Existing hospital records are largely analogue, limiting historical digital retrieval.
+•	Indoor geolocation accuracy may vary; hall and room fallback is necessary.
+•	Operational response depends on real-world staff availability and physical cubicle readiness.
+•	Ambulance workflows may initially be digital coordination only, not full dispatch automation.
+16. Success Metrics
+•	Emergency alerts can be submitted and logged successfully within seconds.
+•	Nearest two cubicles are correctly notified during test scenarios.
+•	Cubicle staff can accept, manage, and resolve emergency cases.
+•	Students can track medications, view records, and schedule appointments.
+•	Hospital staff can manage escalations and appointments through the platform.
+•	Admin dashboards provide useful hall and response analytics.
+17. MVP Release Definition
+The MVP will be considered complete when the following are fully working end-to-end:
+•	Student onboarding and profile management
+•	Emergency SOS with nearest-cubicle routing
+•	Cubicle dashboard and case handling
+•	Real-time case chat and notifications
+•	Ambulance request escalation
+•	Non-emergency complaint workflow
+•	Medication tracker
+•	Health records generated through the system
+•	Hospital appointment booking and management
+•	Admin oversight and analytics
+18. Final Product Statement
+CareGrid Babcock should be delivered as a serious, fully working, institution-ready web application that demonstrates how hall-based health cubicles can improve emergency response, student wellness support, and health operations coordination across Babcock University.
+ 
+19. Product Enhancements and Design Directives (Updated Requirements)
+The following additions refine the product direction to ensure the platform feels more realistic, visually impressive, interactive, and institution-specific rather than generic or AI-generated.
+19.1 Hall-to-Cubicle Mapping Requirement
+Every hall of residence in Babcock University must be represented as a mapped location in the system, and each hall must have an assigned health cubicle node on the map.
+•	The map must display all Babcock halls as identifiable markers or labeled zones.
+•	Each hall marker should visibly indicate that a health cubicle exists there.
+•	Cubicle data must be tied to hall name, hall coordinates, and cubicle status.
+•	Admin users must be able to configure or update hall/cubicle map positions.
+•	The nearest-two-cubicle emergency routing logic must use these hall-linked cubicle coordinates.
+19.2 Live User Location Visualization
+To make emergency response more practical and visually compelling, the system should render the student’s location on the map during active emergency workflows.
+•	When a student submits an emergency, the app should attempt to capture and display their current location on the map.
+•	The user location should appear as a distinctive marker, pulse, or animated beacon.
+•	Cubicle staff should be able to see the student’s location relative to the nearest hall cubicles.
+•	If GPS is weak or unavailable, the hall and room fallback should still be rendered as a hall-based location approximation.
+•	A visual route line or directional cue between the user and assigned cubicle should be considered as a premium UI feature.
+19.3 Interactive Map Experience
+The map should not feel like a static utility. It should feel like a meaningful operational feature and a strong demo centerpiece.
+•	Display all hall cubicles in a polished campus-style map view.
+•	Show active emergency pins, cubicle status, and response assignments visually.
+•	Allow cubicle and admin dashboards to toggle map layers such as halls, emergencies, ambulance routes, and response zones.
+•	Use animated markers, hover states, and info cards to make the map feel alive.
+•	The map should be embedded into dashboards in a way that feels native to the product.
+19.4 Inclusive and Accessible Color System
+The product should use an inclusive, accessible color system that remains attractive while supporting readability, usability, and calm urgency.
+•	Use a light-first healthcare-inspired palette with deep teal, medical blue, soft neutrals, emergency red, success green, and warning amber.
+•	Ensure strong contrast ratios for text, status badges, and important buttons.
+•	Do not rely on color alone to communicate status; include labels, icons, and badges.
+•	Emergency red should be used strategically, not excessively.
+•	The visual system should feel welcoming to a broad student population and not skew overly masculine, overly clinical, or visually cold.
+19.5 Captivating 3D Landing Page Direction
+The landing page should be designed to immediately impress users, lecturers, and demo audiences with a premium and captivating first impression.
+•	Use a 3D-inspired hero section with layered depth, floating health cubicle nodes, soft animated map elements, or campus network visuals.
+•	The hero should visually communicate that the platform connects halls, students, cubicles, and the general hospital.
+•	Use subtle parallax, depth, and motion rather than excessive flashy animation.
+•	Potential 3D landing page motifs include: a stylized Babcock campus care grid, glowing hall nodes, a floating emergency response map, or a health operations dashboard mockup in perspective.
+•	The landing page should include strong calls to action, role-specific entry points, and a clear institutional narrative.
+19.6 Anti-Generic / Anti-AI-Generated Design Principle
+The product must not feel like a generic AI-generated dashboard template. It should feel intentional, designed, and specific to Babcock University.
+•	Use institution-specific labels, hall references, and realistic health workflows.
+•	Avoid repetitive card layouts with empty placeholder feel.
+•	Use custom section arrangements, meaningful dashboard widgets, and realistic status components.
+•	Design around actual user stories: a student in a hall, a responder receiving an alert, a cubicle escalating to hospital, and a hospital scheduling follow-up.
+•	Prioritize believable UI density over blank whitespace-heavy layouts that feel unfinished.
+19.7 Demo Screen Integration Requirement
+The design should leave room for an embedded or featured demo section so that the project can be showcased convincingly during presentations or portfolio use.
+•	Include a prominent landing-page area where a demo screen, product preview, or interactive mockup can be displayed.
+•	The demo area should feel framed as a product showcase rather than a random screenshot placement.
+•	A desktop-style floating browser frame, tablet preview, or dashboard carousel can be used to highlight the app experience.
+•	This section should help communicate the platform’s realism and reduce the perception that the app is only conceptual.
+19.8 Interaction Density and 'Alive' Product Feel
+The web app should feel interactive and content-rich so that it never appears empty, static, or under-designed.
+•	Dashboards should contain live-feeling widgets such as recent incidents, medication reminders, upcoming appointments, active alerts, quick actions, and announcements.
+•	Use empty states only where necessary, and make them informative and visually polished.
+•	Include realistic seeded demo data to make the app feel populated and operational.
+•	Use hover states, animated counters, map movement, notification activity, and timeline updates to increase perceived product depth.
+•	Key screens should always provide meaningful actions or information, avoiding dead space.
+19.9 Recommended UI/Frontend Enhancements
+•	Interactive campus map module on landing page and dashboards
+•	3D or pseudo-3D hero illustration using React Three Fiber or layered motion visuals
+•	Framer Motion transitions and polished microinteractions
+•	Glassmorphism accents used lightly for premium depth
+•	Role-specific dashboards with different visual tone and density
+•	Animated emergency pulse marker for user location
+•	Floating demo preview section on landing page
+•	Seeded sample data for all dashboards to prevent emptiness
