@@ -44,6 +44,7 @@ CREATE TABLE incidents (
   resolved_at TIMESTAMP WITH TIME ZONE,
   latitude NUMERIC,
   longitude NUMERIC,
+  nearest_halls TEXT[] DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

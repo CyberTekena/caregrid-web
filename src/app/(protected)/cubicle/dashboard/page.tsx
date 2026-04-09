@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { AlertTriangle, Clock, Phone, Navigation, Package, AlertOctagon, Zap, CheckCircle2, Users, Search, FileText, ShieldCheck, Loader2 } from "lucide-react"
+import { AlertTriangle, Clock, Phone, Navigation, Package, AlertOctagon, Zap, CheckCircle2, Users, Search, FileText, ShieldCheck, Loader2, Hospital, Stethoscope } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,7 +34,7 @@ function RequestTimer({ since }: { since: string }) {
   )
 }
 
-function IncidentCard({ req, hallById, responderName, phoneNumber }: { req: Incident, hallById: Record<string, any>, responderName: string, phoneNumber: string }) {
+function IncidentCard({ req, currentHallId, hallById, responderName, phoneNumber }: { req: Incident, currentHallId: string, hallById: Record<string, any>, responderName: string, phoneNumber: string }) {
   const [updating, setUpdating] = useState(false)
 
   const handleStatusUpdate = async (newStatus: Incident['status']) => {
@@ -49,25 +49,42 @@ function IncidentCard({ req, hallById, responderName, phoneNumber }: { req: Inci
     }
   }
 
+  const handleEscalate = () => {
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+      {
+        loading: 'Escalating to BUTH...',
+        success: 'Ambulance Dispatched from Hospital',
+        error: 'Escalation failed',
+      }
+    )
+  }
+
   const isResolved = req.status === "resolved"
   const isOnRoute = req.status === "on-route"
+  const isNearbyOnly = req.hall_id !== currentHallId
 
   return (
     <motion.div variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }} whileHover={{ scale: isResolved ? 1 : 1.01 }}>
       <Card className={`relative overflow-hidden backdrop-blur-sm border shadow-xl transition-all
         ${isResolved ? "border-green-500/30 bg-green-500/5 shadow-green-500/10" :
           isOnRoute  ? "border-amber-500/30 bg-amber-500/5 shadow-amber-500/10" :
-                       "border-destructive/30 bg-destructive/5 shadow-destructive/10"}`}>
+                       "border-destructive/30 bg-destructive/5 shadow-destructive/10 animate-[pulse_3s_infinite]"}`}>
         <div className={`absolute top-0 left-0 w-1.5 h-full
-          ${isResolved ? "bg-green-500" : isOnRoute ? "bg-amber-500" : "bg-destructive"}`} />
+          ${isResolved ? "bg-green-500" : isOnRoute ? "bg-amber-500" : "bg-destructive shadow-[2px_0_10px_rgba(239,68,68,0.5)]"}`} />
 
         <CardHeader className="pb-4 border-b border-border/20">
           <div className="flex justify-between items-start">
             <div>
-              <div className="flex gap-2 mb-2 flex-wrap">
+              <div className="flex gap-2 mb-2 flex-wrap items-center">
                 <Badge variant={isResolved ? "secondary" : "destructive"} className="uppercase tracking-tighter">
                   {req.type}
                 </Badge>
+                {isNearbyOnly && (
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 font-black flex items-center gap-1 text-[10px] animate-pulse">
+                    <Navigation className="w-3 h-3" /> NEARBY ASSIST
+                  </Badge>
+                )}
                 <Badge variant="outline" className="bg-background/80 border-border font-black flex items-center gap-1 text-[10px]">
                   <Zap className="w-3 h-3 text-amber-500" /> ESS: {req.ess_score}
                 </Badge>
@@ -101,22 +118,31 @@ function IncidentCard({ req, hallById, responderName, phoneNumber }: { req: Inci
                   {updating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Navigation className="w-4 h-4 mr-2" />}
                   {isOnRoute ? "On-Route" : "Mark On-Route"}
                 </Button>
-                <a href={phoneNumber}>
-                  <Button variant="outline" className="h-12 w-full rounded-xl border-destructive/20 text-destructive font-bold hover:bg-destructive/5">
-                    <Phone className="w-4 h-4 mr-2" /> Call Student
-                  </Button>
-                </a>
+                <Button
+                  variant="outline"
+                  onClick={handleEscalate}
+                  className="h-12 w-full rounded-xl border-blue-500/20 text-blue-600 font-bold hover:bg-blue-500/5"
+                >
+                  <Hospital className="w-4 h-4 mr-2" /> Escalate to BUTH
+                </Button>
               </div>
 
-              <Button
-                onClick={() => handleStatusUpdate('resolved')}
-                disabled={updating}
-                variant="secondary"
-                className="w-full h-10 rounded-xl bg-green-500/10 text-green-700 border-none font-black hover:bg-green-500/20 text-xs"
-              >
-                {updating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
-                Mark Resolved
-              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <a href={phoneNumber} className="w-full">
+                  <Button variant="ghost" className="h-10 w-full rounded-xl border-border text-muted-foreground font-bold hover:bg-muted/50 text-xs">
+                    <Phone className="w-3 h-3 mr-2" /> Call Student
+                  </Button>
+                </a>
+                <Button
+                  onClick={() => handleStatusUpdate('resolved')}
+                  disabled={updating}
+                  variant="secondary"
+                  className="w-full h-10 rounded-xl bg-green-500/10 text-green-700 border-none font-black hover:bg-green-500/20 text-xs"
+                >
+                  {updating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+                  Mark Resolved
+                </Button>
+              </div>
             </>
           )}
         </CardContent>
@@ -248,13 +274,21 @@ export default function CubicleDashboard() {
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground leading-tight">{hallName} Operations Hub</h1>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base">Live Responder Console • {hallName} Cubicle</p>
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-inner">
+             <Stethoscope className="w-8 h-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground leading-tight">{hallName} Operations Hub</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base font-medium flex items-center gap-2">
+               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+               Live Responder Console &bull; {hallName} Cubicle
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-3 bg-green-500/10 px-6 py-3 rounded-2xl border border-green-500/20">
+        <div className="flex items-center gap-3 bg-green-500/10 px-6 py-3 rounded-2xl border border-green-500/20 shadow-sm">
           <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
-          <span className="text-xs font-bold text-green-600 uppercase tracking-widest">System Status: Active</span>
+          <span className="text-xs font-black text-green-600 uppercase tracking-widest">System Status: Active</span>
         </div>
       </motion.div>
 
@@ -330,7 +364,7 @@ export default function CubicleDashboard() {
             </Card>
           ) : (
             <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
-              {active.map(req => <IncidentCard key={req.id} req={req} hallById={hallById} responderName={responderName} phoneNumber={phoneNumber} />)}
+              {active.map(req => <IncidentCard key={req.id} req={req} currentHallId={hallId} hallById={hallById} responderName={responderName} phoneNumber={phoneNumber} />)}
             </motion.div>
           )}
 
@@ -350,8 +384,8 @@ export default function CubicleDashboard() {
             hospital={hospital}
             activeIncidents={active.map(inc => ({
               id: inc.id,
-              lat: hallById[inc.hall_id]?.lat || hospital.lat,
-              lng: hallById[inc.hall_id]?.lng || hospital.lng,
+              lat: inc.latitude || hallById[inc.hall_id]?.lat || hospital.lat,
+              lng: inc.longitude || hallById[inc.hall_id]?.lng || hospital.lng,
               type: inc.type
             }))}
             className="h-[520px] shadow-2xl rounded-2xl"

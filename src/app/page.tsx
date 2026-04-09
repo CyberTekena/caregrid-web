@@ -96,7 +96,7 @@ export default function LandingPage() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="flex items-center gap-6 mt-8 text-sm font-semibold text-muted-foreground/80">
-               <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-accent animate-pulse" /> 14 Active Cubicles</div>
+               <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-accent animate-pulse" /> 20 Active Cubicles</div>
                <div className="hidden sm:block w-1 h-1 rounded-full bg-border" />
                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-primary" /> Hospital Linked</div>
             </motion.div>

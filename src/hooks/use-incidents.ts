@@ -27,7 +27,11 @@ export function useIncidents(hallId?: string) {
     const subscription = incidentService.subscribeToIncidents((payload) => {
       if (payload.eventType === 'INSERT') {
         const newIncident = payload.new as Incident
-        if (!hallId || newIncident.hall_id === hallId) {
+        const isRelevant = !hallId || 
+          newIncident.hall_id === hallId || 
+          (newIncident.nearest_halls && newIncident.nearest_halls.includes(hallId))
+        
+        if (isRelevant) {
           setIncidents(prev => [newIncident, ...prev])
         }
       } else if (payload.eventType === 'UPDATE') {

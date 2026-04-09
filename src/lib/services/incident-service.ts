@@ -19,7 +19,7 @@ export const incidentService = {
     const { data, error } = await supabase
       .from('incidents')
       .select('*')
-      .eq('hall_id', hallId)
+      .or(`hall_id.eq.${hallId},nearest_halls.cs.{${hallId}}`)
       .order('created_at', { ascending: false })
     
     if (error) throw error

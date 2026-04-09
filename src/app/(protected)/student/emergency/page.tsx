@@ -25,7 +25,7 @@ import { MapModule } from "@/components/map-wrapper"
 import { LoadingScreen } from "@/components/loading-screen"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { useHalls } from "@/hooks/use-halls"
-import { BABCOCK_HOSPITAL } from "@/data/halls"
+import { BABCOCK_HOSPITAL, hallsSortedByDistance } from "@/data/halls"
 import { incidentService } from "@/lib/services/incident-service"
 
 export default function StudentEmergency() {
@@ -91,6 +91,17 @@ export default function StudentEmergency() {
 
   const hospitalPos: [number, number] = [BABCOCK_HOSPITAL.lat, BABCOCK_HOSPITAL.lng]
 
+  const alertedCubicles = useMemo(() => {
+    if (!isEmergencyActive || !studentLocation) return []
+    const sorted = hallsSortedByDistance(studentLocation)
+    return sorted.slice(0, 3).map(h => ({
+      id: h.id,
+      lat: h.lat,
+      lng: h.lng,
+      type: "SOS Alerted"
+    }))
+  }, [isEmergencyActive, studentLocation])
+
   const emergencyLabels: Record<string, string> = {
     asthma: "Asthma Attack",
     injury: "Physical Injury",
@@ -104,27 +115,51 @@ export default function StudentEmergency() {
       return
     }
 
+    // Geofencing Check: Babcock University approx bounds
+    // Lat: 6.891 to 6.896, Lng: 3.720 to 3.729
+    if (browserLocation) {
+      const [lat, lng] = browserLocation
+      const isOffCampus = lat < 6.890 || lat > 6.898 || lng < 3.718 || lng > 3.732
+      
+      if (isOffCampus) {
+        toast.error("Out of Service Area", { 
+          description: "We apologize, but SOS services are currently restricted to the Babcock University campus boundaries.",
+          duration: 6000
+        })
+        return
+      }
+    }
+
     setLoading(true)
     try {
+      // Find the nearest 2 halls based on current location
+      const sortedHalls = studentLocation ? hallsSortedByDistance(studentLocation) : []
+      const primaryHall = sortedHalls[0]?.id || user.hall_id || ""
+      const nearestHalls = sortedHalls.slice(1, 3).map(h => h.id) // Get the next 2 nearest halls
+
       // Create persistent incident in Supabase
       await incidentService.create({
         student_id: user.id,
         student_name: reportForOther ? (otherName || "Unknown Student") : user.full_name || "Unknown Student",
-        hall_id: user.hall_id || "",
+        hall_id: primaryHall,
+        nearest_halls: nearestHalls,
         room_number: user.room_number || "",
         type: emergencyLabels[emergencyTypeRef.current] ?? "Emergency",
         description: `${reportForOther ? `[3rd Party Report by ${user.full_name || "Unknown Reporter"}] ` : ""}${descriptionRef.current || "No description provided."}`,
         ess_score: emergencyTypeRef.current === "asthma" ? 9.2 : 6.0,
         is_third_party: reportForOther,
         third_party_name: reportForOther ? user.full_name || null : null,
-        status: 'pending'
+        status: 'pending',
+        latitude: studentLocation ? studentLocation[0] : null,
+        longitude: studentLocation ? studentLocation[1] : null,
       })
 
       setIsEmergencyActive(true)
+      const nearbyHallNames = sortedHalls.slice(0, 3).map(h => h.name).join(", ")
       toast.success("Emergency SOS Triggered!", {
         description: reportForOther 
-          ? `SOS sent for ${otherName || "Unknown student"}. Dispatching to your location.`
-          : `Responders at ${studentHall?.name || "your hall"} have been alerted.`,
+          ? `SOS sent for ${otherName || "Unknown student"}. Dispatching nearest units.`
+          : `Responders at ${nearbyHallNames} have been alerted to your location.`,
         duration: 10000,
       })
 
@@ -304,6 +339,8 @@ export default function StudentEmergency() {
                  halls={halls}
                  userLocation={studentLocation || undefined}
                  hospital={BABCOCK_HOSPITAL}
+                 activeIncidents={alertedCubicles}
+                 responderLocation={responderPos}
                  className="h-full w-full rounded-none"
               />
 
